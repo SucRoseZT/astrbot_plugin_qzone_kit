@@ -1,0 +1,134 @@
+{
+  "_webui_notice": {
+    "description": "⚠️ 先读我：配置请尽量在 WebUI 里改",
+    "type": "string",
+    "hint": "本插件的配置**建议在插件自己的面板里改**：AstrBot WebUI → 插件 → 蔗糖的方便QQ空间 → 「空间动态 / 设置」。面板里改完**立刻生效，不用点保存、也不用重载插件**，每一项下面都有人话解释，说说列表、发说说、评论点赞也都能在面板里直接做。\n\n⚠️ 尤其是账号 Cookie：在面板「设置 → 账号绑定」里粘一下就绑定好了，不用来这页找字段。\n\n这里只当兜底：插件没启动、面板打不开的时候，才在这边改（改完要保存并重载插件）。\n\n（本项是说明，不是配置，不用填，忽略即可。）",
+    "default": "",
+    "obvious_hint": true
+  },
+  "account": {
+    "description": "账号绑定",
+    "type": "object",
+    "hint": "QQ 空间的登录凭证。Cookie 失效了整个插件就只剩报错，先来这里换。",
+    "items": {
+      "cookies_str": {
+        "description": "空间 Cookie",
+        "type": "string",
+        "hint": "浏览器登录 user.qzone.qq.com 后 F12 → Network → 任意请求 → 复制 Cookie 头，需含 p_skey 和 uin。也可以在聊天里 /qzone bind <Cookie> 绑定，或在面板里粘贴保存",
+        "default": ""
+      }
+    }
+  },
+  "switch": {
+    "description": "功能开关",
+    "type": "object",
+    "hint": "六个动作一个个开关。关掉的动作 AI 调用会被直接拒绝，提示词里也会声明它停用。",
+    "items": {
+      "enable_list": {
+        "description": "查说说",
+        "type": "bool",
+        "hint": "AI 可以查看指定 QQ 的说说列表（内容、图片数、评论）",
+        "default": true
+      },
+      "enable_post": {
+        "description": "发说说",
+        "type": "bool",
+        "hint": "AI 可以发布说说，可带图，一次最多 9 张",
+        "default": true
+      },
+      "enable_comment": {
+        "description": "评论",
+        "type": "bool",
+        "hint": "AI 可以给说说发表评论",
+        "default": true
+      },
+      "enable_reply": {
+        "description": "回复评论",
+        "type": "bool",
+        "hint": "AI 可以楼中楼回复某条评论",
+        "default": true
+      },
+      "enable_like": {
+        "description": "点赞",
+        "type": "bool",
+        "hint": "AI 可以点赞，也可以取消赞",
+        "default": true
+      },
+      "enable_delete": {
+        "description": "删说说",
+        "type": "bool",
+        "hint": "AI 可以删除主人自己发的说说。不可恢复，删除前 AI 会先向你确认",
+        "default": true
+      }
+    }
+  },
+  "perm": {
+    "description": "权限",
+    "type": "object",
+    "hint": "谁能用这套空间功能。默认只有管理员，放开给所有人之前想清楚。",
+    "items": {
+      "admin_only": {
+        "description": "仅管理员可用",
+        "type": "bool",
+        "hint": "开启后所有 Qzone 功能（聊天里的 LLM 工具和 /qzone 命令）只有管理员能用。关闭后任何人可用，不建议",
+        "default": true
+      }
+    }
+  },
+  "prompt": {
+    "description": "提示词注入",
+    "type": "object",
+    "hint": "每轮对话往 AI 提示词里塞的使用规范，防止 AI 乱调工具、发废消息。",
+    "items": {
+      "inject_prompt": {
+        "description": "注入使用规范",
+        "type": "bool",
+        "hint": "每次 LLM 请求自动附加一段 Qzone 工具使用规范：什么时候该调/不该调、写操作成功后立刻停手、参数必须照抄列表输出等",
+        "default": true
+      },
+      "custom_prompt": {
+        "description": "自定义追加提示词",
+        "type": "string",
+        "hint": "写在注入内容末尾的额外要求，留空则不加",
+        "default": ""
+      }
+    }
+  },
+  "cool": {
+    "description": "冷却与防抖",
+    "type": "object",
+    "hint": "AI 侧的频率刹车：动作冷却 + 写后全局锁。只在 AI 调工具时生效，面板里人工操作不受限。",
+    "items": {
+      "post_cooldown_seconds": {
+        "description": "发说说冷却（秒）",
+        "type": "int",
+        "hint": "同一会话两次成功发布的最小间隔，0 = 关闭",
+        "default": 600
+      },
+      "comment_cooldown_seconds": {
+        "description": "评论冷却（秒）",
+        "type": "int",
+        "hint": "对同一条说说的评论类操作（评论/回复）最小间隔，0 = 关闭",
+        "default": 120
+      },
+      "like_cooldown_seconds": {
+        "description": "点赞冷却（秒）",
+        "type": "int",
+        "hint": "对同一条说说的点赞类操作最小间隔，0 = 关闭",
+        "default": 60
+      },
+      "delete_cooldown_seconds": {
+        "description": "删说说冷却（秒）",
+        "type": "int",
+        "hint": "删除操作的冷却时间，0 = 关闭",
+        "default": 600
+      },
+      "write_lock_seconds": {
+        "description": "写后全局锁（秒）",
+        "type": "int",
+        "hint": "发/评/赞/删成功后锁定全部 Qzone 工具（含读取），期间 AI 只能用文字汇报结果，防止它成功后又调工具去验证。0 = 关闭",
+        "default": 60
+      }
+    }
+  }
+}

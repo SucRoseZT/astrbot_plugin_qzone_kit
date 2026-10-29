@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>蔗糖的方便QQ空间~</title>
+<style>
+  :root{
+    --pink-1:#ff6fa5; --pink-2:#ff9dc6; --pink-3:#ffd0e3;
+    --violet:#c08bff; --peach:#ffcf9e;
+    --ink:#4a2338; --ink-2:#8a5b74; --ink-3:#b394a6;
+    --line:rgba(255,255,255,.85); --line-2:rgba(255,143,183,.20);
+    --card:rgba(255,255,255,.70); --card-2:rgba(255,255,255,.92);
+    --ok:#2fa97a; --bad:#e2566b; --warn:#d98a2b;
+    --grad:linear-gradient(135deg,#ff6fa5 0%,#ff9dc6 42%,#c08bff 100%);
+    --grad-soft:linear-gradient(150deg,rgba(255,214,232,.95),rgba(255,238,246,.86) 52%,rgba(233,215,255,.92));
+    --grad-soft-2:linear-gradient(150deg,rgba(232,219,255,.92),rgba(255,226,240,.88) 55%,rgba(255,238,216,.92));
+    --shadow:0 18px 44px -18px rgba(214,88,146,.45);
+    --shadow-sm:0 8px 22px -14px rgba(214,88,146,.5);
+    --r:20px; --r-sm:14px;
+  }
+  html[data-theme="dark"]{
+    --ink:#ffe8f2; --ink-2:#e0b8cb; --ink-3:#a9859a;
+    --line:rgba(255,255,255,.10); --line-2:rgba(255,143,183,.16);
+    --card:rgba(48,26,40,.62); --card-2:rgba(56,32,48,.92);
+    --grad-soft:linear-gradient(150deg,rgba(74,30,58,.92),rgba(56,26,46,.9) 55%,rgba(52,30,64,.92));
+    --grad-soft-2:linear-gradient(150deg,rgba(52,30,66,.92),rgba(66,28,50,.9) 55%,rgba(70,38,36,.92));
+    --shadow:0 18px 44px -20px rgba(0,0,0,.65);
+    --shadow-sm:0 8px 22px -14px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    color:var(--ink); font:14px/1.65 "Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    background:#fff6fb; overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:''; position:fixed; inset:-25%; z-index:-1; pointer-events:none;
+    background:
+      radial-gradient(38% 42% at 16% 14%, #ffc6de 0%, transparent 62%),
+      radial-gradient(34% 40% at 84% 10%, #dcc3ff 0%, transparent 60%),
+      radial-gradient(42% 46% at 78% 84%, #ffd8c2 0%, transparent 62%),
+      radial-gradient(40% 44% at 10% 88%, #ffd0e6 0%, transparent 60%),
+      linear-gradient(160deg,#fff8fc 0%,#fff2f8 45%,#fdf1ff 100%);
+    filter:saturate(1.05);
+    animation:drift 26s ease-in-out infinite alternate;
+  }
+  html[data-theme="dark"] body{background:#1a1020}
+  html[data-theme="dark"] body::before{
+    background:
+      radial-gradient(38% 42% at 16% 14%, #4a1f3c 0%, transparent 62%),
+      radial-gradient(34% 40% at 84% 10%, #33204f 0%, transparent 60%),
+      radial-gradient(42% 46% at 78% 84%, #4d2436 0%, transparent 62%),
+      linear-gradient(160deg,#1c1124 0%,#1a1020 60%,#221329 100%);
+  }
+  @keyframes drift{from{transform:translate3d(-1.5%,-1%,0) scale(1.02)}to{transform:translate3d(1.5%,1.5%,0) scale(1.06)}}
+
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:rgba(255,143,183,.42);border-radius:99px;border:2px solid transparent;background-clip:content-box}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(255,111,165,.6);background-clip:content-box}
+  ::-webkit-scrollbar-track{background:transparent}
+
+  .shell{display:flex;flex-direction:column;height:100vh}
+  /* ---------------- 顶栏 ---------------- */
+  .top{
+    flex:0 0 auto; display:flex; align-items:center; gap:14px; padding:12px 20px;
+    background:linear-gradient(180deg,rgba(255,255,255,.88),rgba(255,255,255,.62));
+    border-bottom:1px solid var(--line); backdrop-filter:blur(18px) saturate(1.3);
+    position:relative; z-index:6;
+  }
+  html[data-theme="dark"] .top{background:linear-gradient(180deg,rgba(50,28,44,.9),rgba(40,22,36,.7))}
+  .top::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--grad);opacity:.55}
+  .brand{display:flex;align-items:center;gap:11px;min-width:0}
+  .mark{
+    width:34px;height:34px;border-radius:12px;flex:0 0 34px;background:var(--grad);
+    display:grid;place-items:center;color:#fff;font-size:15px;font-weight:700;
+    box-shadow:0 8px 18px -8px rgba(255,111,165,.9); letter-spacing:-.5px;
+  }
+  .bt{min-width:0}
+  .bt h1{font-size:14.5px;font-weight:700;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bt p{font-size:11.5px;color:var(--ink-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .pill{
+    display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:99px;
+    background:rgba(255,255,255,.72);border:1px solid var(--line-2);font-size:12px;color:var(--ink-2);
+    white-space:nowrap;
+  }
+  html[data-theme="dark"] .pill{background:rgba(255,255,255,.06)}
+  .pill b{color:var(--ink);font-weight:600}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--ink-3);box-shadow:0 0 0 3px rgba(179,148,166,.18)}
+  .dot.on{background:#31c48d;box-shadow:0 0 0 3px rgba(49,196,141,.2)}
+  .dot.off{background:var(--bad);box-shadow:0 0 0 3px rgba(226,86,107,.18)}
+
+  .spacer{flex:1}
+  .tabs{display:flex;gap:4px;padding:4px;border-radius:99px;background:rgba(255,255,255,.55);border:1px solid var(--line-2)}
+  html[data-theme="dark"] .tabs{background:rgba(255,255,255,.05)}
+  .tab{
+    border:0;background:transparent;color:var(--ink-2);font:inherit;font-size:12.5px;font-weight:600;
+    padding:6px 15px;border-radius:99px;cursor:pointer;transition:.18s;white-space:nowrap;
+  }
+  .tab:hover{color:var(--pink-1)}
+  .tab.on{background:var(--grad);color:#fff;box-shadow:0 8px 18px -10px rgba(255,111,165,.95)}
+
+  /* ---------------- 视图骨架 ---------------- */
+  .view{display:none;flex:1;min-height:0}
+  .view.on{display:flex;flex-direction:column}
+  .scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
+  .pad{padding:22px 24px 40px;max-width:960px;margin:0 auto;width:100%}
+  .narrow{max-width:860px}
+
+  /* ---------------- 首页 ---------------- */
+  .hero{padding:26px 0 4px}
+  .hero h2{
+    font-size:27px;line-height:1.28;font-weight:800;letter-spacing:-.3px;
+    background:linear-gradient(100deg,#ff5f9c 0%,#ff87b8 38%,#b478ff 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .hero p{color:var(--ink-2);font-size:13px;margin-top:9px;max-width:580px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:6px 13px;border-radius:99px;
+    background:rgba(255,255,255,.7);border:1px solid var(--line-2);color:var(--ink-2);
+  }
+  html[data-theme="dark"] .chip{background:rgba(255,255,255,.06)}
+  .chip b{color:var(--pink-1);font-weight:700}
+
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:26px}
+  .big{
+    position:relative;border-radius:26px;padding:24px 24px 46px;cursor:pointer;overflow:hidden;
+    border:1px solid var(--line);box-shadow:var(--shadow-sm);
+    transition:transform .24s cubic-bezier(.2,.8,.2,1),box-shadow .24s;
+  }
+  .big.qzone{background:var(--grad-soft)}
+  .big.ai{background:var(--grad-soft-2)}
+  .big:hover{transform:translateY(-5px);box-shadow:var(--shadow)}
+  .big::after{
+    content:'';position:absolute;right:-50px;top:-50px;width:190px;height:190px;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,.75),transparent 62%);opacity:.55;pointer-events:none;
+  }
+  html[data-theme="dark"] .big::after{background:radial-gradient(circle,rgba(255,143,183,.16),transparent 62%)}
+  .big .tag{
+    display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.6px;
+    color:#fff;background:var(--grad);border-radius:99px;padding:3px 10px;
+  }
+  .big.ai .tag{background:linear-gradient(135deg,#b478ff,#ff8fb8)}
+  .big h3{font-size:21px;font-weight:800;margin:14px 0 6px;letter-spacing:-.2px}
+  .big .desc{font-size:12.5px;color:var(--ink-2);line-height:1.75;min-height:44px;max-width:330px}
+  .big ul{list-style:none;margin:14px 0 0;display:flex;flex-wrap:wrap;gap:7px}
+  .big li{
+    font-size:11.5px;color:var(--ink-2);background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.8);
+    border-radius:99px;padding:3px 10px;
+  }
+  html[data-theme="dark"] .big li{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.08)}
+  .big .enter{
+    position:absolute;right:22px;bottom:20px;font-size:12.5px;font-weight:700;
+    color:var(--pink-1);display:flex;align-items:center;gap:5px;transition:.2s;
+  }
+  .big:hover .enter{transform:translateX(4px)}
+  .big .live{
+    margin-top:14px;font-size:11.5px;color:var(--ink-3);
+    display:flex;align-items:center;gap:6px;min-height:16px;
+  }
+
+  .minirow{
+    display:flex;align-items:center;gap:12px;margin-top:18px;padding:14px 18px;border-radius:18px;
+    background:var(--card);border:1px solid var(--line);cursor:pointer;transition:.2s;box-shadow:var(--shadow-sm);
+  }
+  .minirow:hover{border-color:rgba(255,143,183,.5);transform:translateY(-2px)}
+  .minirow .ic{
+    width:32px;height:32px;flex:0 0 32px;border-radius:11px;font-size:15px;display:grid;place-items:center;
+    background:linear-gradient(140deg,#ffe1ee,#f3e2ff);color:#d9508c;
+  }
+  html[data-theme="dark"] .minirow .ic{background:linear-gradient(140deg,#4a2740,#3a2450);color:#ffb4d2}
+  .minirow h4{font-size:13px;font-weight:700}
+  .minirow p{font-size:11.5px;color:var(--ink-3)}
+
+  /* ---------------- 通用控件 ---------------- */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-size:12.5px;font-weight:600;
+    padding:7px 15px;border-radius:99px;cursor:pointer;transition:.18s;white-space:nowrap;
+    background:rgba(255,255,255,.86);border:1px solid var(--line-2);color:var(--ink-2);
+  }
+  html[data-theme="dark"] .btn{background:rgba(255,255,255,.07);color:var(--ink-2)}
+  .btn:hover{color:var(--pink-1);border-color:rgba(255,111,165,.5);transform:translateY(-1px)}
+  .btn:active{transform:translateY(0)}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .btn.pri{background:var(--grad);border:0;color:#fff;box-shadow:0 10px 22px -12px rgba(255,111,165,1)}
+  .btn.pri:hover{color:#fff;filter:brightness(1.04)}
+  .btn.danger{color:var(--bad);border-color:rgba(226,86,107,.28)}
+  .btn.danger.arm{background:var(--bad);color:#fff;border-color:var(--bad)}
+  .btn.sm{padding:5px 12px;font-size:12px}
+
+  input,textarea,select{font:inherit;color:var(--ink);background:rgba(255,255,255,.92);border:1px solid var(--line-2);border-radius:12px;padding:9px 13px;outline:none;transition:.16s;width:100%}
+  html[data-theme="dark"] input,html[data-theme="dark"] textarea{background:rgba(255,255,255,.06)}
+  input::placeholder,textarea::placeholder{color:var(--ink-3)}
+  input:focus,textarea:focus{border-color:rgba(255,111,165,.65);box-shadow:0 0 0 4px rgba(255,157,198,.22)}
+  textarea{resize:vertical;line-height:1.7}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm);backdrop-filter:blur(10px)}
+  .muted{color:var(--ink-3);font-size:11.5px}
+
+  /* ---------------- QQ空间 ---------------- */
+  .acct{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;margin-bottom:14px;border-radius:16px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow-sm)}
+  .acct .who{font-weight:700;font-size:13px}
+  .acct .m{font-size:11.5px;color:var(--ink-3)}
+  .warnbox{font-size:11.5px;color:var(--warn);background:rgba(217,138,43,.1);border:1px solid rgba(217,138,43,.25);padding:3px 10px;border-radius:99px}
+
+  .composer{padding:14px 16px;margin-bottom:14px;border-radius:var(--r);background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow-sm)}
+  .composer textarea{min-height:74px;border-radius:14px}
+  .crow{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+  .crow input{flex:1 1 260px;min-width:0;font-size:12.5px;padding:8px 12px}
+
+  .who-bar{
+    display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px;padding:12px 16px;
+    border-radius:18px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow-sm);
+  }
+  .seg{display:flex;padding:3px;border-radius:99px;background:rgba(255,255,255,.6);border:1px solid var(--line-2);flex:0 0 auto}
+  html[data-theme="dark"] .seg{background:rgba(255,255,255,.05)}
+  .segbtn{
+    border:0;background:transparent;font:inherit;font-size:12.5px;font-weight:700;color:var(--ink-2);
+    padding:6px 14px;border-radius:99px;cursor:pointer;transition:.18s;white-space:nowrap;
+  }
+  .segbtn:hover{color:var(--pink-1)}
+  .segbtn.on{background:var(--grad);color:#fff;box-shadow:0 8px 18px -10px rgba(255,111,165,.95)}
+  .who-bar input{width:180px;font-size:12.5px;padding:8px 13px}
+  .recent{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .rq{
+    font-size:11.5px;padding:3px 10px;border-radius:99px;cursor:pointer;
+    background:rgba(255,157,198,.14);border:1px solid rgba(255,143,183,.28);color:var(--ink-2);
+  }
+  .rq:hover{color:var(--pink-1);border-color:rgba(255,111,165,.55)}
+
+  .viewing{
+    display:flex;align-items:center;gap:9px;margin:0 2px 12px;padding:9px 14px;border-radius:14px;
+    background:rgba(255,255,255,.5);border:1px dashed var(--line-2);font-size:12.5px;
+  }
+  html[data-theme="dark"] .viewing{background:rgba(255,255,255,.04)}
+  .viewing .vt{font-weight:700}
+  .viewing .vs{color:var(--ink-3);font-size:11.5px}
+  .viewing.mine .vt{color:var(--pink-1)}
+  .viewing.other .vt{color:#9b6bff}
+
+  .sentinel{
+    display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;
+    padding:16px 12px 4px;margin-bottom:8px;font-size:12px;color:var(--ink-3);transition:.2s;
+  }
+  .sentinel .sinfo{font-size:12px}
+  .sentinel.spot .sinfo{color:var(--pink-1);font-weight:700}
+  .sentinel.spot #btnMore{animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,111,165,.35)}50%{box-shadow:0 0 0 8px rgba(255,111,165,0)}}
+  .pgnum{font-size:12px;color:var(--ink-3);text-align:center}
+
+  .mood{padding:16px 18px;margin-bottom:12px;border-radius:var(--r);background:var(--card-2);border:1px solid var(--line);box-shadow:var(--shadow-sm);transition:.2s}
+  .mood:hover{border-color:rgba(255,143,183,.45)}
+  .mhead{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+  .ava{
+    width:30px;height:30px;flex:0 0 30px;border-radius:50%;display:grid;place-items:center;
+    font-size:11.5px;font-weight:700;color:#fff;background:linear-gradient(140deg,#ff8fb8,#c08bff);
+  }
+  .mname{font-size:12.5px;font-weight:700}
+  .own{font-size:10px;font-weight:700;color:#fff;background:linear-gradient(135deg,#ff8fb8,#c08bff);padding:1px 7px;border-radius:99px}
+  .mtime{font-size:11px;color:var(--ink-3)}
+  .fid{margin-left:auto;font-size:10px;color:var(--ink-3);opacity:.7;font-family:ui-monospace,Consolas,monospace;word-break:break-all;max-width:40%}
+  .mbody{font-size:13.5px;line-height:1.78;white-space:pre-wrap;word-break:break-word}
+  .pics{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;margin-top:11px;max-width:520px}
+  .pics img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:13px;border:1px solid var(--line-2);cursor:zoom-in;transition:.2s;background:rgba(255,143,183,.08)}
+  .pics img:hover{transform:scale(1.02);box-shadow:0 12px 24px -14px rgba(214,88,146,.7)}
+  .macts{display:flex;gap:6px;align-items:center;margin-top:12px;flex-wrap:wrap}
+  .likebtn.on{color:var(--pink-1);border-color:rgba(255,111,165,.45);background:rgba(255,157,198,.14)}
+
+  .cbox{margin-top:10px;display:none}
+  .cbox.open{display:block}
+  .cbox input{font-size:12.5px;padding:8px 13px;border-radius:99px}
+  .rtag{display:none;align-items:center;gap:7px;margin-top:8px;font-size:11.5px;color:var(--pink-1);
+    background:rgba(255,157,198,.14);border:1px dashed rgba(255,111,165,.4);border-radius:99px;padding:3px 11px;width:fit-content}
+  .rtag.on{display:inline-flex}
+  .rtag i{font-style:normal;cursor:pointer;color:var(--ink-3)}
+  .rtag i:hover{color:var(--bad)}
+
+  .clist{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line-2)}
+  .cnum{font-size:11px;color:var(--ink-3);margin-bottom:6px}
+  .cm{display:flex;gap:8px;align-items:baseline;padding:3px 0;font-size:12.5px}
+  .cm .cu{color:var(--pink-1);font-weight:700;flex:0 0 auto}
+  .cm .cc{flex:1;min-width:0;word-break:break-word;color:var(--ink)}
+  .cm .cr{flex:0 0 auto;font-size:10.5px;color:var(--ink-3)}
+  .cm .ra{flex:0 0 auto;font-size:11px;color:var(--ink-3);cursor:pointer;padding:0 4px;border-radius:6px}
+  .cm .ra:hover{color:var(--pink-1);background:rgba(255,143,183,.14)}
+  .cm.sub{padding-left:22px;font-size:12px}
+  .cm.sub .cu::before{content:'↳ ';color:var(--ink-3)}
+
+  /* ---------------- AI空间 ---------------- */
+  .statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:4px 0 6px}
+  .statp{padding:12px 14px;border-radius:15px;background:rgba(255,255,255,.66);border:1px solid var(--line-2)}
+  html[data-theme="dark"] .statp{background:rgba(255,255,255,.05)}
+  .statp .k{font-size:11px;color:var(--ink-3)}
+  .statp .v{font-size:15px;font-weight:800;margin-top:2px;letter-spacing:-.2px}
+  .statp .v small{font-size:11px;font-weight:600;color:var(--ink-3);margin-left:2px}
+  .secline{display:flex;align-items:center;gap:9px;margin:18px 0 10px}
+  .secline h3{font-size:14px;font-weight:800}
+  .secline .h{font-size:11.5px;color:var(--ink-3)}
+
+  /* ---------------- 设置 ---------------- */
+  .sec{padding:16px 18px 6px;margin-bottom:14px;border-radius:var(--r);background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow-sm)}
+  .sec-h{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .sec-h h4{font-size:13px;font-weight:700;letter-spacing:.2px}
+  .sec-h span{font-size:10.5px;font-weight:700;color:#fff;background:linear-gradient(135deg,#ffa8c9,#c9a0ff);border-radius:99px;padding:1px 8px}
+  .sec-hint{font-size:11.5px;color:var(--ink-3);line-height:1.7;margin-bottom:8px}
+  .row{display:flex;align-items:flex-start;gap:16px;padding:11px 0;border-bottom:1px dashed var(--line-2)}
+  .row:last-child{border-bottom:0}
+  .row.col{flex-direction:column;gap:9px;align-items:stretch}
+  .row.col .saveflag{align-self:flex-end;margin-top:-2px}
+  .rlabel{flex:1;min-width:0;font-size:13px;font-weight:600}
+  .rhint{font-size:11px;color:var(--ink-3);line-height:1.65;margin-top:3px;font-weight:400}
+  .rctl{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding-top:2px}
+  .num{width:96px;text-align:right;padding:7px 11px;font-size:12.5px}
+  .txt{width:250px;max-width:46vw;padding:7px 12px;font-size:12.5px}
+  .cookiebox{width:100%;min-height:80px;resize:vertical;font-size:12px;font-family:ui-monospace,Consolas,monospace;line-height:1.6}
+  .saveflag{font-size:11px;color:var(--ink-3);min-width:36px;text-align:right;transition:opacity .2s;opacity:0}
+  .saveflag.on{opacity:1}
+  .saveflag.ok{color:var(--ok)}
+  .saveflag.no{color:var(--bad)}
+
+  .sw{position:relative;width:44px;height:24px;flex:0 0 44px;cursor:pointer}
+  .sw input{position:absolute;opacity:0;width:0;height:0}
+  .sw i{position:absolute;inset:0;border-radius:99px;background:rgba(179,148,166,.25);transition:.2s}
+  .sw i::after{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.16);transition:.2s}
+  .sw input:checked + i{background:var(--grad)}
+  .sw input:checked + i::after{transform:translateX(20px)}
+
+  /* ---------------- 说明 ---------------- */
+  .doc{padding:18px 20px;margin-bottom:12px;border-radius:var(--r);background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow-sm)}
+  .doc h4{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:9px}
+  .doc h4 em{font-style:normal;font-size:10px;font-weight:800;color:#fff;background:var(--grad);border-radius:8px;padding:2px 7px}
+  .doc p{font-size:12.5px;line-height:1.85;color:var(--ink-2);margin-bottom:8px}
+  .doc p:last-child{margin-bottom:0}
+  .doc b{color:var(--ink)}
+  .doc code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;background:rgba(255,157,198,.18);color:#c04a86;border-radius:6px;padding:1px 6px}
+  html[data-theme="dark"] .doc code{color:#ffb4d2}
+  .doc ul{margin:0 0 8px;padding-left:18px}
+  .doc li{font-size:12.5px;line-height:1.85;color:var(--ink-2)}
+  .doc table{width:100%;border-collapse:collapse;margin:6px 0 4px;font-size:11.5px}
+  .doc th{text-align:left;font-weight:700;color:var(--ink-2);padding:7px 9px;border-bottom:1px solid var(--line-2);white-space:nowrap;background:rgba(255,157,198,.10)}
+  .doc td{padding:7px 9px;border-bottom:1px dashed var(--line-2);line-height:1.7;vertical-align:top}
+  .doc tr:last-child td{border-bottom:0}
+  .callout{background:rgba(255,157,198,.13);border-left:3px solid rgba(255,111,165,.6);border-radius:0 12px 12px 0;padding:9px 13px;font-size:12px;line-height:1.8;color:var(--ink-2);margin:9px 0 4px}
+
+  /* ---------------- 其它 ---------------- */
+  .empty{text-align:center;padding:60px 20px;color:var(--ink-3);font-size:13px}
+  .empty .big-ic{font-size:34px;opacity:.5;margin-bottom:10px}
+  .empty small{display:block;font-size:11.5px;margin-top:6px;opacity:.8}
+  .sk{height:14px;border-radius:8px;background:linear-gradient(90deg,rgba(255,157,198,.14),rgba(255,157,198,.34),rgba(255,157,198,.14));background-size:200% 100%;animation:shine 1.3s linear infinite}
+  @keyframes shine{from{background-position:200% 0}to{background-position:-200% 0}}
+  .skcard{padding:18px;margin-bottom:12px;border-radius:var(--r);background:var(--card-2);border:1px solid var(--line)}
+  .skcard .sk + .sk{margin-top:9px}
+
+  #lightbox{
+    position:fixed;inset:0;z-index:40;display:none;place-items:center;padding:26px;cursor:zoom-out;
+    background:rgba(46,18,36,.74);backdrop-filter:blur(8px);
+  }
+  #lightbox.on{display:grid}
+  #lightbox img{max-width:100%;max-height:100%;border-radius:18px;box-shadow:0 40px 90px -30px rgba(0,0,0,.8)}
+
+  #toast{
+    position:fixed;left:50%;bottom:26px;transform:translate(-50%,12px);z-index:20;
+    padding:10px 22px;border-radius:99px;font-size:13px;font-weight:600;
+    background:rgba(255,255,255,.96);color:var(--ink);border:1px solid var(--line-2);
+    box-shadow:0 18px 40px -16px rgba(214,88,146,.7);opacity:0;pointer-events:none;transition:.26s;
+  }
+  html[data-theme="dark"] #toast{background:rgba(60,34,52,.96)}
+  #toast.on{opacity:1;transform:translate(-50%,0)}
+  #toast.bad{color:var(--bad);border-color:rgba(226,86,107,.5)}
+
+  .banner{
+    display:none;align-items:center;gap:10px;margin:16px 0 0;padding:12px 16px;border-radius:14px;
+    background:rgba(226,86,107,.08);border:1px solid rgba(226,86,107,.28);color:var(--bad);font-size:12.5px;
+  }
+  .banner.on{display:flex}
+  .banner b{font-weight:700}
+
+  @media (max-width:640px){
+    .statgrid{grid-template-columns:repeat(2,1fr)}
+  }
+  @media (max-width:820px){
+    .split{grid-template-columns:1fr}
+    .pad{padding:18px 14px 32px}
+    .hero h2{font-size:22px}
+    .bt p{display:none}
+    .tabs{padding:3px}
+    .tab{padding:6px 11px;font-size:12px}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="top">
+    <div class="brand">
+      <div class="mark">空</div>
+      <div class="bt">
+        <h1>蔗糖的方便QQ空间~</h1>
+        <p id="subtitle">两块地：看空间，管 AI</p>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <span class="pill" id="statusPill"><span class="dot" id="statusDot"></span><span id="statusText">检查中…</span></span>
+    <nav class="tabs" id="tabs">
+      <button class="tab on" data-v="home">首页</button>
+      <button class="tab" data-v="qzone">QQ空间</button>
+      <button class="tab" data-v="ai">AI空间</button>
+      <button class="tab" data-v="doc">说明</button>
+    </nav>
+  </header>
+
+  <!-- ================= 首页 ================= -->
+  <section class="view on" id="vHome">
+    <div class="scroll">
+      <div class="pad">
+        <div class="hero">
+          <h2>看空间是一块，管 AI 是另一块</h2>
+          <p>想看谁就翻谁的空间，想说就说；AI 那边的开关、冷却、Cookie 全在另一块，互不打扰。</p>
+          <div class="chips" id="heroChips">
+            <span class="chip"><span class="dot" id="chipDot"></span><span id="chipState">检查登录态…</span></span>
+          </div>
+        </div>
+
+        <div class="split">
+          <div class="big qzone" data-v="qzone">
+            <span class="tag">QQ空间</span>
+            <h3>去逛空间</h3>
+            <div class="desc">输个 QQ 号就能翻别人的说说，看自己的一键就回去。图片、评论、点赞全都在。</div>
+            <ul><li>看别人的</li><li>看自己的</li><li>点赞 / 评论</li><li>发说说</li></ul>
+            <span class="live" id="liveQzone">—</span>
+            <span class="enter">进入 →</span>
+          </div>
+
+          <div class="big ai" data-v="ai">
+            <span class="tag">AI空间</span>
+            <h3>调 AI 的手脚</h3>
+            <div class="desc">AI 在聊天里能干什么、多久能再干一次、Cookie 换没换，都在这儿。</div>
+            <ul><li>动作开关</li><li>冷却与写锁</li><li>Cookie</li><li>提示词</li></ul>
+            <span class="live" id="liveAI">—</span>
+            <span class="enter">进入 →</span>
+          </div>
+        </div>
+
+        <div class="minirow" data-v="doc">
+          <div class="ic">?</div>
+          <div>
+            <h4>说明</h4>
+            <p>Cookie 怎么拿、命令怎么用、冷却和写锁到底管谁</p>
+          </div>
+          <div class="spacer"></div>
+          <span class="muted">进入 →</span>
+        </div>
+
+        <div class="banner" id="banner"><b>连接异常</b><span id="bannerMsg"></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= QQ空间 ================= -->
+  <section class="view" id="vQzone">
+    <div class="scroll">
+      <div class="pad narrow">
+        <div class="acct">
+          <span class="dot" id="acctDot"></span>
+          <span class="who" id="acctName">检查中…</span>
+          <span class="m" id="acctMeta"></span>
+          <span class="warnbox" id="acctLock" style="display:none"></span>
+          <div class="spacer"></div>
+          <button class="btn sm" id="btnRefresh">刷新</button>
+        </div>
+
+        <div class="who-bar">
+          <div class="seg" id="segMode">
+            <button class="segbtn on" data-mode="mine">我的空间</button>
+            <button class="segbtn" data-mode="other">Ta 的空间</button>
+          </div>
+          <input id="qqInput" type="text" inputmode="numeric" placeholder="QQ 号，回车就看">
+          <button class="btn pri sm" id="btnLoad">去看</button>
+          <span class="recent" id="recentBox"></span>
+        </div>
+
+        <div class="viewing" id="viewingLine">
+          <span class="vt" id="viewingText">正在浏览：—</span>
+          <span class="spacer"></span>
+          <span class="vs" id="pageStat"></span>
+        </div>
+
+        <div class="composer">
+          <textarea id="pubText" placeholder="发条说说…（Ctrl + Enter 快速发布）"></textarea>
+          <div class="crow">
+            <input id="pubImages" type="text" placeholder="配图（可选）：本地路径或 http(s) 链接，逗号/空格分隔，最多 9 张">
+            <button class="btn pri" id="btnPub">发布</button>
+          </div>
+        </div>
+
+        <div id="moodList"></div>
+
+        <div class="sentinel" id="sentinel">
+          <span class="sinfo" id="sinfo"></span>
+          <button class="btn sm" id="btnMore" style="display:none">下一页 ↓</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= AI空间 ================= -->
+  <section class="view" id="vAI">
+    <div class="scroll">
+      <div class="pad narrow">
+
+        <div class="sec" style="padding-bottom:16px">
+          <div class="sec-h"><span>状态</span><h4>AI 现在的手脚</h4></div>
+          <div class="sec-hint">这些是 AI 在聊天里调工具时受的约束。面板里的操作不经过这些刹车。</div>
+          <div class="statgrid" id="aiStats">
+            <div class="statp"><div class="k">账号</div><div class="v">检查中…</div></div>
+          </div>
+        </div>
+
+        <div class="secline">
+          <h3>配置</h3>
+          <span class="h">改动即时保存，马上生效，不用重载插件</span>
+        </div>
+
+        <div id="cfgList">
+          <div class="skcard"><div class="sk" style="width:34%"></div><div class="sk" style="width:80%"></div><div class="sk" style="width:62%"></div><div class="sk" style="width:72%"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 说明 ================= -->
+  <section class="view" id="vDoc">
+    <div class="scroll">
+      <div class="pad narrow">
+
+        <div class="doc">
+          <h4><em>01</em>Cookie 怎么拿</h4>
+          <ul>
+            <li>浏览器登录 <code>user.qzone.qq.com</code>（用要绑定的那个 QQ）</li>
+            <li>按 <code>F12</code> → <b>Network</b> → 刷新页面 → 点任意一个请求</li>
+            <li>在请求头里找到 <code>Cookie:</code> 那一行，<b>整串复制</b></li>
+            <li>粘到「AI空间 → 账号绑定 → 空间 Cookie」，点一下别处自动保存</li>
+          </ul>
+          <p>Cookie 里必须有 <code>p_skey</code>（或 <code>skey</code>）和 <code>uin</code>，少了算不出 g_tk、也解析不出身份。Cookie 会过期，失效了面板会提示，重拿一次粘进来就行。</p>
+        </div>
+
+        <div class="doc">
+          <h4><em>02</em>两块地各干什么</h4>
+          <table>
+            <tr><th>板块</th><th>干什么</th></tr>
+            <tr><td><b>QQ空间</b></td><td>「我的空间 / Ta 的空间」二选一，选谁谁常亮；按 QQ 号翻别人的说说，看图、点赞、评论、发说说。滑到底会提示下一页，右边一直显示第几页 / 共几页</td></tr>
+            <tr><td><b>AI空间</b></td><td>AI 的动作开关、冷却、写锁、Cookie、提示词，这些决定 AI 在聊天里能做什么</td></tr>
+          </table>
+          <div class="callout">看别人的空间，前提是对方空间对你好友可见（或者本来就公开）。看不到就是权限问题，不是插件坏了。</div>
+        </div>
+
+        <div class="doc">
+          <h4><em>03</em>聊天里的命令</h4>
+          <table>
+            <tr><th>命令</th><th>干什么</th></tr>
+            <tr><td><code>/qzone status</code></td><td>看绑定状态和登录态是否有效</td></tr>
+            <tr><td><code>/qzone bind &lt;Cookie&gt;</code></td><td>绑定 Cookie（和面板里粘是同一个效果）</td></tr>
+            <tr><td><code>/qzone unbind</code></td><td>解绑</td></tr>
+            <tr><td><code>/qzone set &lt;开关&gt; &lt;on|off&gt;</code></td><td>切开关：list/post/comment/reply/like/delete/admin/prompt，不带 on/off 就翻转</td></tr>
+          </table>
+          <p>对 AI 说话就行：让它「看看我空间最新说说」「给这条点个赞」「发一条说说配这张图」——前提是对应开关开着。</p>
+        </div>
+
+        <div class="doc">
+          <h4><em>04</em>冷却和写锁管的是谁</h4>
+          <p><b>只管 AI，不管你。</b>动作冷却（发/评/赞/删各自的秒数）限制的是 AI 在聊天里连续调工具；「写后全局锁」是 AI 写操作成功后的一把总闸 —— 锁住期间它连读都不许调，只能用文字汇报结果，防止它成功之后又调一遍工具去"确认"。</p>
+          <div class="callout">你在 QQ空间 里点赞评论、发说说，都不经过这些刹车。</div>
+        </div>
+
+        <div class="doc">
+          <h4><em>05</em>面板和 AI 的关系</h4>
+          <ul>
+            <li>面板走 AstrBot 的插件扩展接口（<code>plugins/extensions</code>），只有总览、说说列表、发/赞/评/回/删、配置读写这几个，没有别的后门</li>
+            <li>面板改配置 = 改官方配置页那份文件，两边看到的是同一份数据；改完立刻生效</li>
+            <li>AI 那边的废消息拦截（"请忽略/测试/占位"类内容）对面板发布同样生效，防手滑</li>
+            <li>删除按钮只有主人自己发的说说才有，而且要连点两次确认</li>
+          </ul>
+        </div>
+
+        <div class="doc">
+          <h4><em>06</em>配置分组一览</h4>
+          <table>
+            <tr><th>分组</th><th>内容</th></tr>
+            <tr><td>账号绑定</td><td>空间 Cookie。整个插件的地基，失效了先换它</td></tr>
+            <tr><td>功能开关</td><td>六个动作各自的开/关，关掉的动作 AI 调用会被直接拒绝</td></tr>
+            <tr><td>权限</td><td>仅管理员可用。默认开，放开给所有人之前想清楚</td></tr>
+            <tr><td>提示词注入</td><td>给 AI 的使用规范 + 你自己的追加要求</td></tr>
+            <tr><td>冷却与防抖</td><td>AI 侧的频率刹车，四个动作冷却 + 写后全局锁</td></tr>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="toast"></div>
+<div id="lightbox"><img alt="查看大图"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+
+  var state = {
+    view: 'home',
+    mode: 'mine',      // mine | other
+    page: 1,
+    pages: 1,
+    total: 0,
+    uin: 0,
+    qq: '',
+    items: [],
+    ov: null,
+    cfg: [],
+    recent: [],
+    reply: null,
+    bridge: null,
+    loading: false,
+    posting: false
+  };
+
+  /* ---------------- 工具 ---------------- */
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function fmtTime(ts) {
+    var n = Number(ts) || 0;
+    if (!n) return '';
+    var d = new Date(n * 1000);
+    var p = function (x) { return String(x).padStart(2, '0'); };
+    var now = new Date();
+    var sameDay = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+    if (sameDay) return '今天 ' + p(d.getHours()) + ':' + p(d.getMinutes());
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
+  var toastTimer = null;
+  function toast(msg, bad) {
+    var t = $('#toast');
+    t.textContent = msg;
+    t.className = 'on' + (bad ? ' bad' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.className = ''; }, 2600);
+  }
+
+  function applyTheme(isDark) {
+    if (typeof isDark !== 'boolean') return;
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  }
+
+  /* ---------------- 与 AstrBot 面板通信 ---------------- */
+
+  function withTimeout(p, ms, label) {
+    return new Promise(function (resolve, reject) {
+      var done = false;
+      var timer = setTimeout(function () {
+        if (done) return;
+        done = true;
+        reject(new Error((label || '请求') + '超时'));
+      }, ms);
+      Promise.resolve(p).then(function (v) {
+        if (done) return;
+        done = true; clearTimeout(timer); resolve(v);
+      }, function (e) {
+        if (done) return;
+        done = true; clearTimeout(timer); reject(e);
+      });
+    });
+  }
+
+  async function getBridge() {
+    if (state.bridge) return state.bridge;
+    for (var i = 0; i < 60; i++) {
+      var b = window.AstrBotPluginView || window.AstrBotPluginPage;
+      if (b) {
+        state.bridge = b;
+        try {
+          await withTimeout(b.ready(), 3000, '面板握手');
+        } catch (e) { /* 握手慢也照样能用 */ }
+        if (typeof b.onContext === 'function') {
+          try { b.onContext(function (ctx) { applyTheme(ctx && ctx.isDark); }); } catch (e) {}
+        }
+        return b;
+      }
+      await sleep(50);
+    }
+    return null;
+  }
+
+  function explain(err) {
+    var msg = (err && err.message) ? err.message : String(err || '未知错误');
+    if (/Unauthorized|Missing API key|401/i.test(msg)) return '面板登录态失效，刷新一下页面重进';
+    return msg;
+  }
+
+  async function api(path, opts) {
+    opts = opts || {};
+    var method = (opts.method || 'GET').toUpperCase();
+    var b = await getBridge();
+    if (!b) throw new Error('没连上 AstrBot 面板（请从面板左侧「扩展功能」里打开本页）');
+    try {
+      if (method === 'GET') {
+        return await withTimeout(b.apiGet(path, opts.params || undefined), 35000, '读取');
+      }
+      return await withTimeout(b.apiPost(path, opts.body || {}), 60000, '提交');
+    } catch (e) {
+      throw new Error(explain(e));
+    }
+  }
+
+  /* ---------------- 视图切换 ---------------- */
+
+  var VIEW_MAP = { home: 'vHome', qzone: 'vQzone', ai: 'vAI', doc: 'vDoc' };
+  var SUB_MAP = {
+    home: '两块地：看空间，管 AI',
+    qzone: '别人的、自己的，都能翻',
+    ai: 'AI 的手脚与刹车都在这',
+    doc: '拿 Cookie、用命令、看懂冷却'
+  };
+
+  function go(view) {
+    if (!VIEW_MAP[view]) view = 'home';
+    state.view = view;
+
+    Object.keys(VIEW_MAP).forEach(function (k) {
+      var el = document.getElementById(VIEW_MAP[k]);
+      if (el) el.classList.toggle('on', k === view);
+    });
+    $$('.tab').forEach(function (t) {
+      t.classList.toggle('on', t.getAttribute('data-v') === view);
+    });
+
+    $('#subtitle').textContent = SUB_MAP[view] || '';
+    document.title = SUB_MAP[view] || '';
+    var sc = $('#' + VIEW_MAP[view] + ' .scroll');
+    if (sc) sc.scrollTop = 0;
+
+    if (view === 'qzone') { refreshOverview(); if (!state.items.length) loadMoods(true); }
+    if (view === 'ai') { refreshOverview(); if (!state.cfg.length) loadConfig(); }
+  }
+
+  /* ---------------- 总览 ---------------- */
+
+  function setStatus() {
+    var d = state.ov;
+    var dot = $('#statusDot'), txt = $('#statusText');
+    var chipDot = $('#chipDot'), chipState = $('#chipState');
+    if (!d) {
+      dot.className = 'dot'; txt.textContent = '连接中…';
+      if (chipDot) chipDot.className = 'dot';
+      if (chipState) chipState.textContent = '检查登录态…';
+      return;
+    }
+    if (!d.bound) {
+      dot.className = 'dot off'; txt.textContent = '未绑定 Cookie';
+      if (chipDot) chipDot.className = 'dot off';
+      if (chipState) chipState.textContent = '未绑定 Cookie';
+      return;
+    }
+    dot.className = 'dot on'; txt.textContent = 'QQ ' + d.uin;
+    if (chipDot) chipDot.className = 'dot on';
+    if (chipState) chipState.textContent = '已绑定 QQ ' + d.uin + ' · 动作 ' + enabledCount() + '/6';
+  }
+
+  function enabledCount() {
+    var d = state.ov;
+    if (!d || !d.features) return 0;
+    return Object.keys(d.features).filter(function (k) { return d.features[k]; }).length;
+  }
+
+  function renderHomeLive() {
+    var d = state.ov;
+    var lq = $('#liveQzone'), la = $('#liveAI');
+    if (!lq || !la) return;
+    if (!d) { lq.textContent = '—'; la.textContent = '—'; return; }
+    if (!d.bound) {
+      lq.textContent = '未绑定 Cookie';
+      la.textContent = '未绑定 Cookie';
+      return;
+    }
+    lq.textContent = '当前账号 QQ ' + d.uin;
+    la.textContent = '动作 ' + enabledCount() + '/6 · ' + (d.admin_only ? '仅管理员' : '所有人可用');
+  }
+
+  function renderAcct() {
+    var d = state.ov;
+    var dot = $('#acctDot'), name = $('#acctName'), meta = $('#acctMeta'), lock = $('#acctLock');
+    if (!dot) return;
+    if (!d || !d.bound) {
+      dot.className = 'dot off';
+      name.textContent = '未绑定 Cookie';
+      meta.textContent = '去「AI空间 → 账号绑定」粘 Cookie，或聊天里 /qzone bind';
+      lock.style.display = 'none';
+      return;
+    }
+    dot.className = 'dot on';
+    name.textContent = '登录账号 · QQ ' + d.uin;
+    meta.textContent = '动作 ' + enabledCount() + '/6 · Cookie ' + d.cookie_fields + ' 项';
+    if (d.write_lock_remain > 0) {
+      lock.style.display = '';
+      lock.textContent = 'AI 写锁中 · 剩 ' + Math.ceil(d.write_lock_remain) + ' 秒';
+    } else {
+      lock.style.display = 'none';
+    }
+  }
+
+  function renderAIStats() {
+    var box = $('#aiStats');
+    if (!box) return;
+    var d = state.ov;
+    if (!d) {
+      box.innerHTML = '<div class="statp"><div class="k">账号</div><div class="v">检查中…</div></div>';
+      return;
+    }
+    var cd = d.cooldowns || {};
+    var lockTxt = d.write_lock_remain > 0 ? Math.ceil(d.write_lock_remain) + 's' : '空闲';
+    var cells = [
+      ['账号', d.bound ? 'QQ ' + d.uin : '未绑定'],
+      ['可用动作', enabledCount() + '<small>/6</small>'],
+      ['使用范围', d.admin_only ? '仅管理员' : '所有人'],
+      ['写后锁', lockTxt],
+      ['发说说冷却', (cd.post || 0) + '<small>s</small>'],
+      ['点赞冷却', (cd.like || 0) + '<small>s</small>']
+    ];
+    box.innerHTML = cells.map(function (c) {
+      return '<div class="statp"><div class="k">' + esc(c[0]) + '</div><div class="v">' + c[1] + '</div></div>';
+    }).join('');
+  }
+
+  async function refreshOverview(silent) {
+    try {
+      var d = await api('api/overview');
+      state.ov = d;
+      setStatus(); renderHomeLive(); renderAcct(); renderAIStats();
+      var bn = $('#banner'); if (bn) bn.classList.remove('on');
+    } catch (e) {
+      setStatus();
+      if (!silent) {
+        var bn = $('#banner');
+        if (bn) { $('#bannerMsg').textContent = e.message; bn.classList.add('on'); }
+        toast(e.message, true);
+      }
+    }
+  }
+
+  /* ---------------- 说说列表 ---------------- */
+
+  function avatarOf(uin) {
+    var s = String(uin || '').replace(/\D/g, '');
+    if (!s) return '空';
+    return s.length >= 2 ? s.slice(-2) : s;
+  }
+
+  function rememberQQ(uin) {
+    var my = state.ov && state.ov.uin ? String(state.ov.uin) : '';
+    if (!uin || uin === my) return;
+    state.recent = [uin].concat(state.recent.filter(function (x) { return x !== uin; })).slice(0, 6);
+    renderRecent();
+  }
+
+  function renderRecent() {
+    var box = $('#recentBox');
+    if (!box) return;
+    if (!state.recent.length) { box.innerHTML = ''; return; }
+    box.innerHTML = '<span class="muted" style="margin-left:4px">最近</span>' + state.recent.map(function (q) {
+      return '<span class="rq" data-qq="' + esc(q) + '">' + esc(q) + '</span>';
+    }).join('');
+    $$('.rq', box).forEach(function (el) {
+      el.addEventListener('click', function () {
+        setMode('other', el.getAttribute('data-qq'));
+      });
+    });
+  }
+
+  /* 模式：我的空间 / Ta 的空间 —— 谁被选中谁常亮 */
+  function setMode(mode, qq) {
+    state.mode = mode === 'other' ? 'other' : 'mine';
+    $$('.segbtn').forEach(function (b) {
+      b.classList.toggle('on', b.getAttribute('data-mode') === state.mode);
+    });
+    if (state.mode === 'mine') {
+      $('#qqInput').value = '';
+      loadMoods(true);
+    } else {
+      if (qq) $('#qqInput').value = qq;
+      var v = ($('#qqInput').value || '').trim();
+      if (!v) { $('#qqInput').focus(); toast('填个 QQ 号'); return; }
+      loadMoods(true);
+    }
+  }
+
+  function renderViewing() {
+    var line = $('#viewingLine');
+    var txt = $('#viewingText');
+    var stat = $('#pageStat');
+    var mine = state.ov && String(state.uin) === String(state.ov.uin);
+    line.classList.toggle('mine', !!mine);
+    line.classList.toggle('other', !mine && !!state.uin);
+    txt.textContent = state.uin
+      ? (mine ? '正在浏览：我的空间 · QQ ' + state.uin : '正在浏览：QQ ' + state.uin + ' 的空间')
+      : '正在浏览：—';
+    stat.textContent = state.total
+      ? '第 ' + state.page + ' / ' + state.pages + ' 页 · 共 ' + state.total + ' 条'
+      : (state.items.length ? '第 ' + state.page + ' 页' : '');
+  }
+
+  function updateSentinel() {
+    var box = $('#sentinel');
+    var info = $('#sinfo');
+    var more = $('#btnMore');
+    if (!state.items.length) { box.style.display = 'none'; return; }
+    box.style.display = '';
+    more.style.display = state.page < state.pages ? '' : 'none';
+    if (state.page < state.pages) {
+      info.textContent = '第 ' + state.page + ' / ' + state.pages + ' 页 · 共 ' + state.total + ' 条';
+    } else {
+      info.textContent = state.pages > 1
+        ? '到底了 · 共 ' + state.total + ' 条（第 ' + state.pages + ' / ' + state.pages + ' 页）'
+        : '到底了 · 共 ' + state.total + ' 条';
+    }
+  }
+
+  function renderMoods(mode) {
+    var box = $('#moodList');
+    if (!state.items.length) {
+      box.innerHTML = '<div class="empty"><div class="big-ic">☁</div>这里没有说说<small>可能对方空间没对你开放，或者真的没发过</small></div>';
+      return;
+    }
+    if (mode === 'append') {
+      var start = state.seenCount || 0;
+      for (var i = start; i < state.items.length; i++) box.appendChild(moodCard(state.items[i]));
+      state.seenCount = state.items.length;
+      return;
+    }
+    box.innerHTML = '';
+    state.items.forEach(function (m) { box.appendChild(moodCard(m)); });
+    state.seenCount = state.items.length;
+  }
+
+  function skeleton() {
+    $('#moodList').innerHTML =
+      '<div class="skcard"><div class="sk" style="width:42%"></div><div class="sk" style="width:88%"></div><div class="sk" style="width:66%"></div></div>' +
+      '<div class="skcard"><div class="sk" style="width:30%"></div><div class="sk" style="width:74%"></div></div>';
+  }
+
+  function qqTarget() {
+    if (state.mode === 'mine') return '';
+    return ($('#qqInput').value || '').trim().replace(/^[oO]+/, '');
+  }
+
+  async function loadMoods(reset) {
+    if (state.loading) return;
+    reset = reset !== false;
+
+    var qq = qqTarget();
+    if (state.mode === 'other') {
+      if (!/^\d{4,12}$/.test(qq)) {
+        toast('QQ 号填得不对：' + (qq || '空'), true);
+        return;
+      }
+    }
+    state.qq = qq;
+    var page = reset ? 1 : state.page + 1;
+
+    state.loading = true;
+    if (reset) {
+      state.page = 1; state.pages = 1; state.total = 0; state.uin = 0; state.seenCount = 0;
+      state.items = [];
+      skeleton();
+      $('#sentinel').style.display = 'none';
+      renderViewing();
+    } else {
+      $('#btnMore').disabled = true;
+      $('#btnMore').textContent = '加载中…';
+    }
+
+    try {
+      var d = await api('api/moods', { params: { qq: qq, page: page } });
+      var items = d.items || [];
+      state.page = d.page || page;
+      state.pages = Math.max(1, d.pages || 1);
+      state.total = d.total || 0;
+      state.uin = d.uin;
+      state.items = reset ? items : state.items.concat(items);
+      if (reset) state.seenCount = 0;
+
+      var mine = state.ov && String(d.uin) === String(state.ov.uin);
+      if (!mine && items.length) rememberQQ(String(d.uin));
+      renderViewing();
+      renderMoods(reset ? 'reset' : 'append');
+    } catch (e) {
+      if (reset) {
+        state.items = [];
+        $('#moodList').innerHTML = '<div class="empty"><div class="big-ic">⚠</div>读取失败<small>' + esc(e.message) + '</small></div>';
+        renderViewing();
+      } else {
+        toast(e.message, true);
+        state.page = Math.max(1, state.page - 1);
+      }
+    }
+
+    state.loading = false;
+    $('#btnMore').disabled = false;
+    $('#btnMore').textContent = '下一页 ↓';
+    updateSentinel();
+  }
+
+  /* 只刷新某一页（评论/回复/删除后不用整页重载） */
+  async function refreshPageOf(mood) {
+    var idx = state.items.indexOf(mood);
+    if (idx < 0) return;
+    var pageNo = Math.floor(idx / 10) + 1;
+    try {
+      var d = await api('api/moods', { params: { qq: state.qq, page: pageNo } });
+      var start = (pageNo - 1) * 10;
+      var items = d.items || [];
+      state.items.splice.apply(state.items, [start, 10].concat(items));
+      state.pages = Math.max(1, d.pages || state.pages);
+      state.total = d.total || state.total;
+      var sc = $('#vQzone .scroll').scrollTop;
+      renderMoods('reset');
+      $('#vQzone .scroll').scrollTop = sc;
+      renderViewing();
+      updateSentinel();
+    } catch (e) {
+      toast(e.message, true);
+    }
+  }
+
+
+  function cmRow(c, sub) {
+    return '<div class="cm' + (sub ? ' sub' : '') + '">' +
+      '<span class="cu">' + esc(c.uin) + '</span>' +
+      '<span class="cc">' + esc(c.content) + '</span>' +
+      (sub ? '' : '<span class="ra" data-cid="' + esc(c.cid) + '" data-cuin="' + esc(c.uin) + '">回复</span>' +
+        '<span class="cr">' + fmtTime(c.time) + '</span>') +
+      '</div>';
+  }
+
+  function moodCard(m) {
+    var el = document.createElement('div');
+    el.className = 'mood';
+
+    var h = '<div class="mhead">' +
+      '<div class="ava">' + esc(avatarOf(m.uin)) + '</div>' +
+      '<span class="mname">QQ ' + esc(m.uin) + '</span>' +
+      (m.own ? '<span class="own">自己</span>' : '') +
+      '<span class="mtime">' + fmtTime(m.created_time) + '</span>' +
+      '<span class="fid">' + esc(m.tid) + '</span>' +
+      '</div>';
+
+    h += '<div class="mbody">' + (esc(m.content) || '<span class="muted">（只有图，没写文字）</span>') + '</div>';
+
+    if (m.pics && m.pics.length) {
+      h += '<div class="pics">' + m.pics.map(function (u) {
+        return '<img src="' + esc(u) + '" referrerpolicy="no-referrer" loading="lazy" alt="说说配图">';
+      }).join('') + '</div>';
+    }
+
+    h += '<div class="macts">' +
+      '<button class="btn sm likebtn' + (m.isliked ? ' on' : '') + '">' + (m.isliked ? '♥ 已赞' : '♡ 点赞') + '</button>' +
+      '<button class="btn sm cbtn">✎ 评论</button>' +
+      (m.own ? '<button class="btn sm danger delbtn">删除</button>' : '') +
+      '</div>';
+
+    h += '<div class="cbox">' +
+      '<input type="text" placeholder="写评论，回车发送">' +
+      '<div class="rtag"><span></span><i>✕</i></div>' +
+      '</div>';
+
+    if (m.comments && m.comments.length) {
+      h += '<div class="clist"><div class="cnum">' + (m.commentnum || m.comments.length) + ' 条评论</div>';
+      m.comments.forEach(function (c) {
+        h += cmRow(c, false);
+        (c.replies || []).forEach(function (r) { h += cmRow(r, true); });
+      });
+      h += '</div>';
+    }
+
+    el.innerHTML = h;
+
+    // 点赞
+    var likeBtn = $('.likebtn', el);
+    likeBtn.addEventListener('click', async function () {
+      if (likeBtn.disabled) return;
+      likeBtn.disabled = true;
+      try {
+        await api('api/like', { method: 'POST', body: { qq: m.uin, fid: m.tid, unlike: !!m.isliked } });
+        m.isliked = !m.isliked;
+        likeBtn.classList.toggle('on', m.isliked);
+        likeBtn.textContent = m.isliked ? '♥ 已赞' : '♡ 点赞';
+        toast(m.isliked ? '已点赞' : '已取消赞');
+      } catch (e) {
+        toast(e.message, true);
+      }
+      likeBtn.disabled = false;
+    });
+
+    // 评论 / 回复
+    var cbox = $('.cbox', el);
+    var input = $('input', cbox);
+    var rtag = $('.rtag', cbox);
+    var rspan = $('span', rtag);
+
+    function setReply(c) {
+      state.reply = c ? { cid: c.cid, uin: c.uin, fid: m.tid, qq: m.uin } : null;
+      rtag.classList.toggle('on', !!c);
+      if (c) rspan.textContent = '回复 ' + c.uin;
+      input.placeholder = c ? ('回复 ' + c.uin + '…') : '写评论，回车发送';
+      cbox.classList.add('open');
+      input.focus();
+    }
+    $('i', rtag).addEventListener('click', function () { setReply(null); });
+
+    $('.cbtn', el).addEventListener('click', function () {
+      var open = cbox.classList.toggle('open');
+      if (open) input.focus();
+    });
+
+    el.addEventListener('click', function (ev) {
+      var t = ev.target;
+      if (t && t.classList && t.classList.contains('ra')) {
+        setReply({ cid: t.getAttribute('data-cid'), uin: t.getAttribute('data-cuin') });
+      }
+    });
+
+    async function send() {
+      var text = input.value.trim();
+      if (!text || input.disabled) return;
+      input.disabled = true;
+      try {
+        if (state.reply && state.reply.fid === m.tid) {
+          await api('api/reply', {
+            method: 'POST',
+            body: { qq: state.reply.qq, fid: m.tid, cid: state.reply.cid, cuin: state.reply.uin, content: text }
+          });
+          toast('回复已发送');
+        } else {
+          await api('api/comment', { method: 'POST', body: { qq: m.uin, fid: m.tid, content: text } });
+          toast('评论已发送');
+        }
+        input.value = '';
+        setReply(null);
+        cbox.classList.remove('open');
+        refreshPageOf(m);
+      } catch (e) {
+        toast(e.message, true);
+      }
+      input.disabled = false;
+    }
+    input.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') send(); });
+
+    // 删除（两步确认）
+    var delBtn = $('.delbtn', el);
+    if (delBtn) {
+      var armed = false, timer = null;
+      var disarm = function () {
+        armed = false;
+        delBtn.textContent = '删除';
+        delBtn.classList.remove('arm');
+      };
+      delBtn.addEventListener('click', async function () {
+        if (!armed) {
+          armed = true;
+          delBtn.textContent = '确定删？';
+          delBtn.classList.add('arm');
+          timer = setTimeout(disarm, 3200);
+          return;
+        }
+        clearTimeout(timer);
+        delBtn.disabled = true;
+        try {
+          await api('api/delete', { method: 'POST', body: { fid: m.tid, created_time: m.created_time } });
+          toast('已删除');
+          var idx = state.items.indexOf(m);
+          if (idx >= 0) state.items.splice(idx, 1);
+          if (state.total > 0) state.total -= 1;
+          el.remove();
+          state.seenCount = state.items.length;
+          renderViewing();
+          updateSentinel();
+          if (!state.items.length) renderMoods('reset');
+        } catch (e) {
+          toast(e.message, true);
+          delBtn.disabled = false;
+          disarm();
+        }
+      });
+    }
+
+    return el;
+  }
+
+  /* ---------------- 发布 ---------------- */
+
+  async function publish() {
+    if (state.posting) return;
+    var text = ($('#pubText').value || '').trim();
+    if (!text) { toast('写点内容再发', true); return; }
+    var btn = $('#btnPub');
+    state.posting = true;
+    btn.disabled = true;
+    btn.textContent = '发布中…';
+    try {
+      var d = await api('api/post', {
+        method: 'POST',
+        body: { content: text, images: ($('#pubImages').value || '').trim() }
+      });
+      toast('发布成功' + (d && d.pics ? '（带 ' + d.pics + ' 张图）' : ''));
+      $('#pubText').value = '';
+      $('#pubImages').value = '';
+      setMode('mine');
+    } catch (e) {
+      toast(e.message, true);
+    }
+    state.posting = false;
+    btn.disabled = false;
+    btn.textContent = '发布';
+  }
+
+  /* ---------------- 设置 ---------------- */
+
+  function cfgRow(it) {
+    var hint = '<div class="rhint">' + esc(it.hint || '') + '</div>';
+    var head = '<div class="rlabel">' + esc(it.label) + hint + '</div>';
+    var body;
+    if (it.type === 'bool') {
+      body = '<label class="sw"><input type="checkbox"' + (it.value ? ' checked' : '') + '><i></i></label>';
+    } else if (it.type === 'int') {
+      body = '<input class="num" type="number" min="0" value="' + esc(it.value) + '">';
+    } else if (it.key === 'cookies_str') {
+      return '<div class="row col" data-key="' + esc(it.key) + '">' + head +
+        '<textarea class="cookiebox" placeholder="整串 Cookie 粘进来，失焦自动保存"></textarea>' +
+        '<span class="saveflag"></span></div>';
+    } else {
+      body = '<input class="txt" type="text" value="' + esc(it.value) + '" placeholder="留空表示不追加">';
+    }
+    return '<div class="row" data-key="' + esc(it.key) + '">' + head +
+      '<div class="rctl">' + body + '<span class="saveflag"></span></div></div>';
+  }
+
+  function renderConfig() {
+    var box = $('#cfgList');
+    box.innerHTML = '';
+    var groups = [];
+    state.cfg.forEach(function (it) {
+      var g = null;
+      for (var i = 0; i < groups.length; i++) if (groups[i].key === it.group_key) { g = groups[i]; break; }
+      if (!g) { g = { key: it.group_key, label: it.group, hint: it.group_hint, items: [] }; groups.push(g); }
+      g.items.push(it);
+    });
+
+    groups.forEach(function (g, idx) {
+      var sec = document.createElement('div');
+      sec.className = 'sec';
+      var h = '<div class="sec-h"><span>' + String(idx + 1).padStart(2, '0') + '</span><h4>' + esc(g.label) + '</h4></div>' +
+        (g.hint ? '<div class="sec-hint">' + esc(g.hint) + '</div>' : '');
+      g.items.forEach(function (it) { h += cfgRow(it); });
+      sec.innerHTML = h;
+      box.appendChild(sec);
+    });
+
+    if (!groups.length) {
+      box.innerHTML = '<div class="empty"><div class="big-ic">▦</div>没有可显示的配置项</div>';
+      return;
+    }
+
+    var ta = $('.row[data-key="cookies_str"] textarea', box);
+    if (ta) {
+      var ck = state.cfg.filter(function (x) { return x.key === 'cookies_str'; })[0];
+      ta.value = (ck && ck.value) || '';
+    }
+
+    wireConfig(box);
+  }
+
+  function wireConfig(box) {
+    $$('.row', box).forEach(function (row) {
+      var key = row.getAttribute('data-key');
+      var it = null;
+      for (var i = 0; i < state.cfg.length; i++) if (state.cfg[i].key === key) { it = state.cfg[i]; break; }
+      if (!it) return;
+
+      var flag = $('.saveflag', row);
+      var timer = null;
+
+      function mark(cls, text) {
+        flag.className = 'saveflag on ' + (cls || '');
+        flag.textContent = text;
+      }
+
+      async function save(value) {
+        mark('', '保存…');
+        try {
+          var payload = {};
+          payload[key] = value;
+          var r = await api('api/config/set', { method: 'POST', body: { patch: payload } });
+          if (r && r.items) state.cfg = r.items;
+          if (r && r.overview) {
+            state.ov = r.overview;
+            setStatus(); renderHomeLive(); renderAcct(); renderAIStats();
+          }
+          mark('ok', '已存');
+          setTimeout(function () { flag.className = 'saveflag'; }, 1500);
+        } catch (e) {
+          mark('no', '失败');
+          toast(e.message, true);
+        }
+      }
+
+      if (it.type === 'bool') {
+        var cb = $('input', row);
+        cb.addEventListener('change', function () { save(cb.checked); });
+      } else if (it.type === 'int') {
+        var num = $('input', row);
+        num.addEventListener('change', function () {
+          var v = parseInt(num.value, 10);
+          if (isNaN(v) || v < 0) { num.value = it.value; toast('要填非负整数', true); return; }
+          save(v);
+        });
+      } else {
+        var input = $('input,textarea', row);
+        var last = input.value;
+        var commit = function () {
+          if (input.value === last) return;
+          last = input.value;
+          save(input.value);
+        };
+        input.addEventListener('input', function () {
+          clearTimeout(timer);
+          timer = setTimeout(commit, 700);
+        });
+        input.addEventListener('blur', commit);
+        input.addEventListener('keydown', function (ev) {
+          if (ev.key === 'Enter' && input.tagName === 'INPUT') { clearTimeout(timer); commit(); }
+        });
+      }
+    });
+  }
+
+  async function loadConfig() {
+    $('#cfgList').innerHTML = '<div class="skcard"><div class="sk" style="width:34%"></div><div class="sk" style="width:80%"></div><div class="sk" style="width:62%"></div><div class="sk" style="width:72%"></div></div>';
+    try {
+      var d = await api('api/config');
+      state.cfg = d.items || [];
+      if (d.overview) { state.ov = d.overview; setStatus(); renderAcct(); renderHomeLive(); renderAIStats(); }
+      renderConfig();
+    } catch (e) {
+      $('#cfgList').innerHTML = '<div class="empty"><div class="big-ic">⚠</div>配置读取失败<small>' + esc(e.message) + '</small></div>';
+    }
+  }
+
+  /* ---------------- 事件绑定 ---------------- */
+
+  $$('.tab').forEach(function (t) {
+    t.addEventListener('click', function () { go(t.getAttribute('data-v')); });
+  });
+  $$('[data-v]').forEach(function (c) {
+    if (c.classList.contains('tab')) return;
+    c.addEventListener('click', function () { go(c.getAttribute('data-v')); });
+  });
+
+  $('#btnRefresh').addEventListener('click', function () {
+    refreshOverview();
+    loadMoods(true);
+  });
+
+  // 我的空间 / Ta 的空间：点谁谁亮，另一个灭
+  $$('.segbtn').forEach(function (b) {
+    b.addEventListener('click', function () { setMode(b.getAttribute('data-mode')); });
+  });
+
+  $('#btnLoad').addEventListener('click', function () { setMode('other'); });
+  $('#qqInput').addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter') { ev.preventDefault(); setMode('other'); }
+  });
+  $('#btnMore').addEventListener('click', function () { loadMoods(false); });
+
+  // 滑到底 → 提示下一页
+  $('#vQzone .scroll').addEventListener('scroll', function () {
+    var el = this;
+    var atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 140;
+    var box = $('#sentinel');
+    box.classList.toggle('spot', atBottom && state.page < state.pages && !state.loading);
+  });
+
+  $('#btnPub').addEventListener('click', publish);
+  $('#pubText').addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); publish(); }
+  });
+  $('#pubImages').addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter') { ev.preventDefault(); publish(); }
+  });
+
+  // 图片点开大图（沙箱 iframe 里 window.open 会被拦，用页内灯箱）
+  $('#moodList').addEventListener('click', function (ev) {
+    var t = ev.target;
+    if (t && t.tagName === 'IMG' && t.src) {
+      var lb = $('#lightbox');
+      $('img', lb).src = t.src;
+      lb.classList.add('on');
+    }
+  });
+  $('#lightbox').addEventListener('click', function () {
+    this.classList.remove('on');
+    $('img', this).src = '';
+  });
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape') {
+      var lb = $('#lightbox');
+      if (lb.classList.contains('on')) { lb.classList.remove('on'); $('img', lb).src = ''; }
+    }
+  });
+
+  /* ---------------- 启动 ---------------- */
+
+  (async function boot() {
+    var b = await getBridge();
+    if (b) {
+      try {
+        var ctx = (typeof b.getContext === 'function') ? b.getContext() : null;
+        if (ctx) applyTheme(ctx.isDark);
+      } catch (e) {}
+    }
+    await refreshOverview(true);
+    setStatus();
+    if (!state.ov) {
+      var bn = $('#banner');
+      if (bn) {
+        $('#bannerMsg').textContent = '没连上 AstrBot 面板桥，请从面板左侧「扩展功能」进入本页';
+        bn.classList.add('on');
+      }
+    }
+  })();
+})();
+</script>
+</body>
+</html>
