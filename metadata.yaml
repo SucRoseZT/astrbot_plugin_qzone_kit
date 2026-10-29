@@ -1,8 +1,11 @@
 name: astrbot_plugin_qzone_kit
 version: 1.2.0
 author: SucRoseZT
+repo: https://github.com/SucRoseZT/astrbot_plugin_qzone_kit
 desc: QQ空间精简工具：发说说（带图）、评论、回复评论、点赞、读说说、删说说；LLM tools + /qzone 管理命令 + WebUI 面板，内置冷却与废消息拦截
 display_name: "蔗糖的方便QQ空间~"
 entry: main.py
 support_platforms:
   - aiocqhttp
+tags:
+  - astrbot
