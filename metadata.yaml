@@ -8,4 +8,7 @@ entry: main.py
 support_platforms:
   - aiocqhttp
 tags:
-  - astrbot
+  - qzone
+  - qq
+  - social
+  - webui
