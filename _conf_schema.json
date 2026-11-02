@@ -62,6 +62,31 @@
       }
     }
   },
+  "likes": {
+    "description": "👍 点赞显示",
+    "type": "object",
+    "hint": "看说说时要不要顺带显示「谁赞了」。默认全关：点赞数据只能从空间动态流里捞，每页多一次请求；而且只有落在动态流里的说说才有（自己的、好友近期的），别人的老说说捞不到，会静默不显示。",
+    "items": {
+      "show_likes_self": {
+        "description": "看自己空间时显示点赞",
+        "type": "bool",
+        "hint": "翻自己空间的说说时，每条下面列出点赞人的昵称和总人数。默认关。",
+        "default": false
+      },
+      "show_likes_other": {
+        "description": "看别人空间时显示点赞",
+        "type": "bool",
+        "hint": "翻别人空间的说说时，每条下面列出点赞人的昵称和总人数。默认关——别人的说说未必在动态流里，捞不到就不显示。",
+        "default": false
+      },
+      "like_names_max": {
+        "description": "最多列出几个点赞人",
+        "type": "int",
+        "hint": "动态流里本身就只带前几个人名，这里再截一道。总数照常显示。",
+        "default": 8
+      }
+    }
+  },
   "perm": {
     "description": "权限",
     "type": "object",

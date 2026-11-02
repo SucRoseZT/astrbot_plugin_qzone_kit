@@ -11,6 +11,7 @@ import base64
 import json
 import re
 import time
+import unicodedata
 
 import aiohttp
 
@@ -26,6 +27,8 @@ LIKE_PROXY_URL = "https://user.qzone.qq.com/proxy/domain/w.qzone.qq.com/cgi-bin/
 UNLIKE_PROXY_URL = "https://user.qzone.qq.com/proxy/domain/w.qzone.qq.com/cgi-bin/likes/internal_unlike_app"
 LIKE_DIRECT_URL = "https://w.qzone.qq.com/cgi-bin/likes/internal_dolike_app"
 UNLIKE_DIRECT_URL = "https://w.qzone.qq.com/cgi-bin/likes/internal_unlike_app"
+# 点赞明细唯一还活着的来源（get_like_list_app 已稳定 500，2026-11-03 实测）
+FEEDS_URL = "https://user.qzone.qq.com/proxy/domain/ic2.qzone.qq.com/cgi-bin/feeds/feeds3_html_more"
 
 MAX_IMAGES = 9
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
@@ -418,6 +421,118 @@ class QzoneClient:
         except (TypeError, ValueError):
             total = 0
         return (msgs if isinstance(msgs, list) else []), max(0, total)
+
+    # ---------- 点赞明细 ---------- #
+
+    _LIKE_ITEM_RE = re.compile(
+        r'data-unikey="https?://user\.qzone\.qq\.com/(\d+)/mood/([0-9a-fA-F]+)"'
+    )
+    _LIKE_MODULE_RE = re.compile(
+        r'((?:<a[^>]*class="[^"]*q_namecard[^"]*"[^>]*>[^<]*</a>(?:、)?)+)'
+        r'等<span class="f-like-cnt">(\d+)</span>人觉得很赞'
+    )
+    _LIKE_NAME_RE = re.compile(r"<a[^>]*>([^<]+)</a>")
+
+    async def get_feed_like_map(self, num: int = 30) -> dict:
+        """抓一次空间动态流，整理成 {tid: {"count": n, "names": [...]}}。
+
+        为什么不用 get_like_list_app：该接口 2026-11-03 线上实测稳定 500——
+        换过 g_tk 来源（p_skey / skey / 不带）、GET 与 POST、user / h5 两个
+        域名、加 if_theme / callback / format，全部一样。老的点赞列表接口已经
+        不能用。现在点赞明细只剩 feeds3_html_more 这一条：它返回的是 HTML 片段，
+        里面直接写着「A、B 等 N 人觉得很赞」，配 data-unikey 能跟 tid 对齐。
+
+        局限：只有落在动态流里的说说才有数据（自己发的、好友近期的）。流里没有
+        的 tid 不会出现在返回值里，调用方必须按「未知」处理，不能当成「没人赞」。
+        """
+        if not self.cookies:
+            raise QzoneAuthError("尚未绑定 Cookie，请先执行 /qzone bind")
+        params = {
+            "uin": self.uin,
+            "scope": 0,
+            "view": 1,
+            "filter": "all",
+            "flag": 1,
+            "appid": 311,
+            "daylist": "",
+            "uinlist": "",
+            "gid": "",
+            "aim": 1,
+            "sort": 0,
+            "pos": 0,
+            "num": max(5, min(int(num or 30), 50)),
+            "g_tk": self.gtk,
+            "format": "json",
+            "inCharset": "utf-8",
+            "outCharset": "utf-8",
+            "frequency": 1,
+            "refresh": 0,
+            "style": 1,
+            "useutf8": 1,
+        }
+        session = await self._ensure_session()
+        headers = {
+            "User-Agent": self.UA,
+            "Cookie": self.cookie_text,
+            "Referer": f"https://user.qzone.qq.com/{self.uin}",
+        }
+        try:
+            async with session.get(
+                FEEDS_URL, params=params, headers=headers, allow_redirects=False
+            ) as resp:
+                if resp.status != 200:
+                    return {}
+                raw = await resp.text()
+        except (aiohttp.ClientError, asyncio.TimeoutError):
+            return {}
+        return self._parse_feed_likes(raw)
+
+    @classmethod
+    def _parse_feed_likes(cls, raw: str) -> dict:
+        """从动态流的 JSON-in-JS 里把点赞模块抠出来。
+
+        返回体不是标准 JSON（键名不带引号），但内容是转义过的 HTML，所以不解析
+        JSON，直接反转义后按 data-unikey 切片，每片里找「…等 N 人觉得很赞」。
+        """
+        if not raw:
+            return {}
+        text = (
+            raw.replace("\\x22", '"')
+            .replace("\\x3C", "<")
+            .replace("\\x3E", ">")
+            .replace("\\/", "/")
+        )
+        hits = list(cls._LIKE_ITEM_RE.finditer(text))
+        out: dict[str, dict] = {}
+        for i, hit in enumerate(hits):
+            tid = hit.group(2)
+            end = hits[i + 1].start() if i + 1 < len(hits) else len(text)
+            chunk = text[hit.end():end]
+            module = cls._LIKE_MODULE_RE.search(chunk)
+            if not module:
+                continue
+            names = []
+            for raw_name in cls._LIKE_NAME_RE.findall(module.group(1)):
+                # 昵称里常混零宽 / 标签字符（实测有 U+E0000，category 是 Cn），
+                # 整类 C* 连同变体选择符一起清掉再判空。
+                clean = "".join(
+                    ch for ch in raw_name
+                    if unicodedata.category(ch)[0] != "C"
+                    and not (0xFE00 <= ord(ch) <= 0xFE0F)
+                ).strip()
+                if clean and clean not in names:
+                    names.append(clean)
+            try:
+                count = int(module.group(2))
+            except (TypeError, ValueError):
+                count = len(names)
+            if count <= 0 and not names:
+                continue
+            prev = out.get(tid)
+            if prev and int(prev.get("count") or 0) >= count:
+                continue
+            out[tid] = {"count": count, "names": names}
+        return out
 
     # ---------- 评论 / 回复 ----------
 

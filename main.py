@@ -32,6 +32,10 @@ CFG_GROUPS = [
      "QQ 空间的登录凭证。Cookie 失效了整个插件就只剩报错，先来这里换。"),
     ("switch", "功能开关",
      "六个动作一个个开关。关掉的动作 AI 调用会被直接拒绝，提示词里也会声明它停用。"),
+    ("likes", "点赞显示",
+     "看说说时要不要顺带显示「谁赞了」。默认全关：点赞数据只能从空间动态流里捞，"
+     "每页多一次请求；而且只有落在动态流里的说说才有（自己的、好友近期的），"
+     "别人的老说说捞不到，会静默不显示。"),
     ("perm", "权限",
      "谁能用这套空间功能。默认只有管理员，放开给所有人之前想清楚。"),
     ("prompt", "提示词注入",
@@ -60,6 +64,14 @@ CFG_ITEMS = [
      "AI 可以点赞，也可以取消赞"),
     ("enable_delete", "删说说", "bool", "switch",
      "AI 可以删除主人自己发的说说。不可恢复，删除前 AI 会先向你确认"),
+    # ---- 点赞显示 ----
+    ("show_likes_self", "看自己空间显示点赞", "bool", "likes",
+     "翻自己空间的说说时，每条下面列出点赞人的昵称和总人数。默认关"),
+    ("show_likes_other", "看别人空间显示点赞", "bool", "likes",
+     "翻别人空间的说说时，每条下面列出点赞人的昵称和总人数。默认关——"
+     "别人的说说未必在动态流里，捞不到就不显示"),
+    ("like_names_max", "最多列出几个点赞人", "int", "likes",
+     "动态流里本身就只带前几个人名，这里再截一道。总人数照常显示"),
     # ---- 权限 ----
     ("admin_only", "仅管理员可用", "bool", "perm",
      "开启后所有 Qzone 功能（聊天里的 LLM 工具和 /qzone 命令）只有管理员能用。"
@@ -93,6 +105,7 @@ CFG_DEFAULTS = {
     "cookies_str": "",
     "enable_list": True, "enable_post": True, "enable_comment": True,
     "enable_reply": True, "enable_like": True, "enable_delete": True,
+    "show_likes_self": False, "show_likes_other": False, "like_names_max": 8,
     "admin_only": True,
     "inject_prompt": True, "custom_prompt": "",
     "post_cooldown_seconds": 600, "comment_cooldown_seconds": 120,
@@ -359,6 +372,33 @@ class QzoneKit(Star):
     def _enabled_features(self) -> list[str]:
         return [f for f in self._FEATURES if self._feature_enabled(f)]
 
+    # ---------- 点赞显示 ---------- #
+
+    def _like_display(self, mood_uin, own_uin) -> bool:
+        """这条说说要不要显示点赞。自己 / 别人两个开关分开管，默认都关。"""
+        same = str(mood_uin or "") == str(own_uin or "")
+        return bool(self._cfg("show_likes_self" if same else "show_likes_other", False))
+
+    @staticmethod
+    def _fmt_likes(likes, limit: int = 8) -> str:
+        """把 {count, names} 拼成一行人话。数据缺失时返回空串，调用方直接不显示。"""
+        if not isinstance(likes, dict):
+            return ""
+        try:
+            count = int(likes.get("count") or 0)
+        except (TypeError, ValueError):
+            count = 0
+        names = [str(n).strip() for n in (likes.get("names") or []) if str(n).strip()]
+        if not count and not names:
+            return ""
+        shown = names[: max(1, int(limit or 8))]
+        head = "、".join(shown)
+        if head and count > len(shown):
+            return f"{head} 等 {count} 人赞了"
+        if head:
+            return f"{head} 赞了（共 {count} 人）" if count else f"{head} 赞了"
+        return f"{count} 人赞了"
+
     # ---------- LLM 工具 ----------
 
     @filter.llm_tool(name="qzone_list")
@@ -396,6 +436,13 @@ class QzoneKit(Star):
         if not msgs:
             return "该 QQ 没有读到说说（可能没有说说、没有权限或已翻到最后一页）。"
         target_uin = hostuin or client.uin
+        # 点赞：两个开关任一命中才去捞动态流，默认一条额外请求都不发
+        like_map = {}
+        try:
+            if any(self._like_display(m.get("uin") or target_uin, client.uin) for m in msgs):
+                like_map = await client.get_feed_like_map(num=30)
+        except Exception:
+            like_map = {}
         lines = [f"QQ {target_uin} 的说说（第 {page} 页，共 {len(msgs)} 条）："]
         for i, m in enumerate(msgs, 1):
             tid = str(m.get("tid") or "")
@@ -408,6 +455,12 @@ class QzoneKit(Star):
             preview = content[:100] + ("…" if len(content) > 100 else "")
             if preview:
                 lines.append(f"   内容：{preview}")
+            if self._like_display(m.get("uin") or target_uin, client.uin):
+                like_text = self._fmt_likes(
+                    like_map.get(tid), int(self._cfg("like_names_max", 8) or 8)
+                )
+                if like_text:
+                    lines.append(f"   点赞：{like_text}")
             comments = m.get("commentlist") or []
             if comments:
                 lines.append(f"   共 {m.get('commentnum') or m.get('reply_num') or len(comments)} 条评论：")
@@ -850,6 +903,13 @@ class QzoneKit(Star):
             return self._err(f"Cookie 失效：{exc} 请重新绑定。")
         except QzoneError as exc:
             return self._err(f"读取说说失败：{exc}")
+        # 点赞明细：两个开关任一命中才去捞一次动态流（每页最多多一次请求）
+        like_map = {}
+        try:
+            if any(self._like_display(m.get("uin") or hostuin, client.uin) for m in msgs or []):
+                like_map = await client.get_feed_like_map(num=30)
+        except Exception:
+            like_map = {}
         per_page = 10
         if total > 0:
             pages = max(1, (total + per_page - 1) // per_page)
@@ -887,6 +947,10 @@ class QzoneKit(Star):
                 "content": _strip_html(m.get("content") or ""),
                 "pics": pics,
                 "isliked": bool(m.get("isliked")),
+                "likes": (
+                    like_map.get(str(m.get("tid") or ""))
+                    if self._like_display(mood_uin, client.uin) else None
+                ),
                 "commentnum": int(m.get("commentnum") or m.get("reply_num") or len(comments)),
                 "comments": comments,
                 "own": mood_uin == str(client.uin),

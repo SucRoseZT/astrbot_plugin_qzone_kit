@@ -1077,6 +1077,14 @@
       (m.own ? '<button class="btn sm danger delbtn">删除</button>' : '') +
       '</div>';
 
+    if (m.likes && (m.likes.count || (m.likes.names && m.likes.names.length))) {
+      var likeNames = (m.likes.names || []).slice(0, 8);
+      var likeText = likeNames.length
+        ? esc(likeNames.join('、')) + (m.likes.count > likeNames.length ? ' 等 ' + m.likes.count + ' 人赞了' : ' 赞了')
+        : m.likes.count + ' 人赞了';
+      h += '<div class="mlikes muted">♥ ' + likeText + '</div>';
+    }
+
     h += '<div class="cbox">' +
       '<input type="text" placeholder="写评论，回车发送">' +
       '<div class="rtag"><span></span><i>✕</i></div>' +
