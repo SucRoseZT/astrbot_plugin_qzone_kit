@@ -14,7 +14,7 @@
       "cookies_str": {
         "description": "空间 Cookie",
         "type": "string",
-        "hint": "浏览器登录 user.qzone.qq.com 后 F12 → Network → 任意请求 → 复制 Cookie 头，需含 p_skey 和 uin。也可以在聊天里 /qzone bind <Cookie> 绑定，或在面板里粘贴保存",
+        "hint": "浏览器登录 user.qzone.qq.com 后 F12 → Network → 任意请求 → 复制 Cookie 头，需含 p_skey 和 uin。也可以在聊天里 /qzone bind <Cookie> 绑定，或在面板里粘贴保存。装的是 NapCat 的话，打开本插件面板 → 设置 → Cookie 那一栏点「⚡ 一键获取（NapCat）」可以直接从运行中的 QQ 取，不用手动复制",
         "default": ""
       }
     }

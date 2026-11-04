@@ -315,6 +315,14 @@
   .num{width:96px;text-align:right;padding:7px 11px;font-size:12.5px}
   .txt{width:250px;max-width:46vw;padding:7px 12px;font-size:12.5px}
   .cookiebox{width:100%;min-height:80px;resize:vertical;font-size:12px;font-family:ui-monospace,Consolas,monospace;line-height:1.6}
+  .ckbar{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+  .ckbtn{display:inline-flex;align-items:center;gap:6px;padding:7px 15px;border-radius:99px;border:none;background:var(--grad);color:#fff;font-size:12px;font-weight:600;cursor:pointer;box-shadow:var(--shadow-sm);transition:.18s;letter-spacing:.2px}
+  .ckbtn:hover{transform:translateY(-1px);filter:brightness(1.04)}
+  .ckbtn:active{transform:translateY(0)}
+  .ckbtn:disabled{opacity:.55;cursor:default;transform:none;filter:none}
+  .ckmsg{font-size:11px;line-height:1.6;color:var(--ink-3);flex:1;min-width:0}
+  .ckmsg.ok{color:var(--ok)}
+  .ckmsg.no{color:var(--bad)}
   .saveflag{font-size:11px;color:var(--ink-3);min-width:36px;text-align:right;transition:opacity .2s;opacity:0}
   .saveflag.on{opacity:1}
   .saveflag.ok{color:var(--ok)}
@@ -1252,8 +1260,12 @@
       body = '<input class="num" type="number" min="0" value="' + esc(it.value) + '">';
     } else if (it.key === 'cookies_str') {
       return '<div class="row col" data-key="' + esc(it.key) + '">' + head +
-        '<textarea class="cookiebox" placeholder="整串 Cookie 粘进来，失焦自动保存"></textarea>' +
-        '<span class="saveflag"></span></div>';
+        '<textarea class="cookiebox" placeholder="整串 Cookie 粘进来，失焦自动保存；装的是 NapCat 的话可以直接点下面「一键获取」"></textarea>' +
+        '<div class="ckbar">' +
+        '<button type="button" class="ckbtn" data-act="fetchck">⚡ 一键获取（NapCat）</button>' +
+        '<span class="ckmsg" data-act="ckmsg"></span>' +
+        '<span class="saveflag"></span>' +
+        '</div></div>';
     } else {
       body = '<input class="txt" type="text" value="' + esc(it.value) + '" placeholder="留空表示不追加">';
     }
@@ -1356,6 +1368,40 @@
         input.addEventListener('keydown', function (ev) {
           if (ev.key === 'Enter' && input.tagName === 'INPUT') { clearTimeout(timer); commit(); }
         });
+      }
+
+      if (key === 'cookies_str') {
+        var ckBtn = $('[data-act="fetchck"]', row);
+        var ckMsg = $('[data-act="ckmsg"]', row);
+        var ckBox = $('textarea', row);
+        if (ckBtn) {
+          ckBtn.addEventListener('click', async function () {
+            ckBtn.disabled = true;
+            ckMsg.className = 'ckmsg';
+            ckMsg.textContent = '正在向 NapCat 要空间 Cookie…';
+            try {
+              var r = await api('api/cookie/fetch', { method: 'POST' });
+              var ck = (r && r.cookie) || '';
+              if (ckBox) { ckBox.value = ck; last = ck; }
+              if (r && r.items) state.cfg = r.items;
+              if (r && r.overview) {
+                state.ov = r.overview;
+                setStatus(); renderAcct(); renderHomeLive(); renderAIStats();
+              }
+              mark('ok', '已存');
+              setTimeout(function () { flag.className = 'saveflag'; }, 1600);
+              ckMsg.className = 'ckmsg ok';
+              ckMsg.textContent = '已获取并保存：QQ ' + (r && r.uin) + ' · ' + (r && r.fields) + ' 个字段 · g_tk=' + (r && r.gtk) + ((r && r.has_pskey) ? ' · 含 p_skey' : ' · 无 p_skey');
+              toast('Cookie 已获取并保存');
+            } catch (e) {
+              var msg = (e && e.message) ? e.message : '获取失败';
+              ckMsg.className = 'ckmsg no';
+              ckMsg.textContent = msg;
+              toast(msg, true);
+            }
+            ckBtn.disabled = false;
+          });
+        }
       }
     });
   }

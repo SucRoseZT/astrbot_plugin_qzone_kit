@@ -50,7 +50,9 @@ CFG_ITEMS = [
     # ---- 账号 ----
     ("cookies_str", "空间 Cookie", "str", "account",
      "浏览器登录 user.qzone.qq.com 后 F12 → Network → 任意请求 → 复制 Cookie 头，需含 p_skey 和 uin。"
-     "也可以在聊天里 /qzone bind <Cookie> 绑定，或在面板里粘贴保存"),
+     "也可以在聊天里 /qzone bind <Cookie> 绑定，或在面板里粘贴保存。"
+     "装的是 NapCat 的话，打开本插件面板 → 设置 → Cookie 那一栏点「⚡ 一键获取（NapCat）」"
+     "可以直接从运行中的 QQ 取，不用手动复制"),
     # ---- 开关 ----
     ("enable_list", "查说说", "bool", "switch",
      "AI 可以查看指定 QQ 的说说列表（内容、图片数、评论）"),
@@ -747,9 +749,107 @@ class QzoneKit(Star):
             f"面板入口：/api/plug/{PANEL_PREFIX}（发说说/评论/点赞/改配置都在面板里，改完立刻生效）"
         )
 
+    @classmethod
+    def _cookie_text_from_action(cls, ret) -> str:
+        """从 get_cookies / get_credentials 的返回里抠出 Cookie 文本。"""
+        node = ret
+        for _ in range(4):
+            if isinstance(node, str):
+                return node.strip()
+            if not isinstance(node, dict):
+                return ""
+            for key in ("cookies", "cookie", "cookie_text", "cookies_str"):
+                val = node.get(key)
+                if isinstance(val, str) and val.strip():
+                    return val.strip()
+                if isinstance(val, dict) and val:
+                    return "; ".join(f"{k}={v}" for k, v in val.items())
+            for key in ("data", "result", "retdata", "response"):
+                if key in node:
+                    node = node[key]
+                    break
+            else:
+                return ""
+        return ""
+
+    async def _cookie_from_bot(self, bot, domain: str = "user.qzone.qq.com") -> tuple[str, str]:
+        """向 OneBot 实现（NapCat）要 Cookie，返回 (cookie, 错误信息)。"""
+        caller = None
+        for owner in (getattr(bot, "api", None), bot):
+            if owner is None:
+                continue
+            for attr in ("call_action", "call_api"):
+                fn = getattr(owner, attr, None)
+                if callable(fn):
+                    caller = fn
+                    break
+            if caller is not None:
+                break
+        if caller is None:
+            return "", "拿不到 OneBot 调用句柄：当前接入的不是 aiocqhttp / NapCat，没法从 QQ 客户端取 Cookie，请手动粘贴"
+
+        last = "NapCat 没有返回 Cookie"
+        for dom in (domain, "qzone.qq.com", "h5.qzone.qq.com"):
+            try:
+                ret = await asyncio.wait_for(caller("get_cookies", domain=dom), timeout=8)
+            except asyncio.TimeoutError:
+                last = f"调用 get_cookies 超时（domain={dom}），NapCat 可能没响应"
+                continue
+            except Exception as exc:  # noqa: BLE001
+                last = (
+                    f"当前 OneBot 实现不支持 get_cookies（{exc}）。"
+                    "这接口只有 NapCat 才有，go-cqhttp / Lagrange 之类取不到，请手动粘贴"
+                )
+                continue
+            text = self._cookie_text_from_action(ret)
+            if text:
+                logger.info(f"[QzoneKit] 已从 OneBot 取到 {dom} 的 Cookie（{len(text)} 字符）")
+                return text, ""
+            last = f"NapCat 在 {dom} 下没有 Cookie（先在 QQ 里打开一次「空间」面板再试）"
+        return "", last
+
+    async def _cookie_from_onebot(
+        self, event: AstrMessageEvent, domain: str = "user.qzone.qq.com"
+    ) -> tuple[str, str]:
+        """从聊天事件所在平台直接向运行中的 QQ（NapCat/OneBot）要 Cookie。"""
+        return await self._cookie_from_bot(getattr(event, "bot", None), domain)
+
+    def _aiocqhttp_platform(self):
+        """取当前接入的 aiocqhttp 平台实例（WebUI 里没有 event，只能从平台管理器拿）。"""
+        try:
+            insts = list(self.context.platform_manager.platform_insts)
+        except Exception:  # noqa: BLE001
+            insts = []
+        for platform in insts:
+            try:
+                name = platform.meta().name
+            except Exception:  # noqa: BLE001
+                name = ""
+            if name == "aiocqhttp":
+                return platform
+        return None
+
+    async def _cookie_from_platform(self, domain: str = "user.qzone.qq.com") -> tuple[str, str]:
+        """给 WebUI 用的取 Cookie 入口：从平台实例拿 bot，再走 get_cookies。"""
+        platform = self._aiocqhttp_platform()
+        if platform is None:
+            return "", "当前没有接入 aiocqhttp / NapCat：一键获取只能从运行中的 QQ 客户端取，请手动粘贴 Cookie"
+        bot = None
+        getter = getattr(platform, "get_client", None)
+        if callable(getter):
+            try:
+                bot = getter()
+            except Exception:  # noqa: BLE001
+                bot = None
+        if bot is None:
+            bot = getattr(platform, "bot", None)
+        if bot is None:
+            return "", "QQ 适配器没有可用连接（NapCat 没连上），请确认 NapCat 已启动并连上 AstrBot，或手动粘贴 Cookie"
+        return await self._cookie_from_bot(bot, domain)
+
     @filter.command("qzone")
     async def qzone_cmd(self, event: AstrMessageEvent):
-        """QQ 空间管理命令：/qzone bind <Cookie> | /qzone status | /qzone unbind | /qzone set <开关> <on|off>"""
+        """QQ 空间管理命令：/qzone bind [Cookie] | /qzone ck | /qzone status | /qzone unbind | /qzone set <开关> <on|off>"""
         denied = self._require_admin(event)
         if denied:
             yield event.plain_result(denied)
@@ -757,10 +857,16 @@ class QzoneKit(Star):
         parts = str(event.message_str or "").strip().split(maxsplit=2)
         sub = parts[1].lower() if len(parts) > 1 else "status"
         if sub == "bind":
-            if len(parts) < 3:
-                yield event.plain_result("用法：/qzone bind <Cookie 字符串>（浏览器登录 user.qzone.qq.com 后 F12 → Network → 复制请求里的 Cookie，需含 p_skey 和 uin）")
-                return
-            raw = parts[2].strip()
+            raw = parts[2].strip() if len(parts) > 2 else ""
+            if not raw:
+                raw, fetch_err = await self._cookie_from_onebot(event)
+                if not raw:
+                    yield event.plain_result(
+                        f"自动取 Cookie 失败：{fetch_err}\n"
+                        "仍可手动绑定：/qzone bind <Cookie>（浏览器登录 user.qzone.qq.com 后 F12 → Network → "
+                        "复制请求里的 Cookie，需含 p_skey 和 uin）"
+                    )
+                    return
             test = QzoneClient(raw)
             if not test.uin:
                 yield event.plain_result("绑定失败：Cookie 里没解析到 uin，确认复制的是登录后的完整 Cookie。")
@@ -779,6 +885,22 @@ class QzoneKit(Star):
                 logger.warning(f"[QzoneKit] Cookie 保存失败：{mode}，仅本次会话生效")
             self._client_cookie = ""
             yield event.plain_result(f"已绑定 QQ {test.uin} 的空间 Cookie。{probe}。")
+        elif sub == "ck":
+            text, fetch_err = await self._cookie_from_onebot(event)
+            if not text:
+                yield event.plain_result(f"取 Cookie 失败：{fetch_err}")
+                return
+            client = QzoneClient(text)
+            uin = client.uin
+            fields = len(client.cookies)
+            gtk = client.gtk
+            has_pskey = "p_skey" in client.cookies
+            await client.close()
+            yield event.plain_result(
+                f"已从 NapCat 取到 QQ {uin} 的 Cookie（{fields} 个字段，g_tk={gtk}，"
+                f"p_skey={'有' if has_pskey else '无'}）：\n{text}\n"
+                "只发在私聊/管理员会话，别贴群里。要直接绑定就 /qzone bind"
+            )
         elif sub == "set":
             arg = parts[2].strip() if len(parts) > 2 else ""
             if not arg:
@@ -842,6 +964,7 @@ class QzoneKit(Star):
         register_api(f"{API_PREFIX}/delete", self._api_delete, ["POST"], "删说说")
         register_api(f"{API_PREFIX}/config", self._api_config, ["GET"], "总配置读取")
         register_api(f"{API_PREFIX}/config/set", self._api_config_set, ["POST"], "总配置保存")
+        register_api(f"{API_PREFIX}/cookie/fetch", self._api_cookie_fetch, ["POST"], "一键获取空间 Cookie")
 
     async def _panel_page(self):
         page = Path(__file__).parent / "pages" / "空间面板" / "index.html"
@@ -1083,4 +1206,41 @@ class QzoneKit(Star):
         return self._ok({
             "saved": True, "mode": info,
             "items": self._cfg_items(), "overview": self._overview(),
+        })
+
+    async def _api_cookie_fetch(self):
+        """WebUI「一键获取」：从运行中的 NapCat 取空间 Cookie 并直接保存。"""
+        text, err = await self._cookie_from_platform()
+        if not text:
+            return self._err(err)
+        try:
+            client = QzoneClient(text)
+        except Exception as exc:  # noqa: BLE001
+            return self._err(f"取到的 Cookie 无法解析：{exc}")
+        uin = client.uin
+        fields = len(client.cookies)
+        gtk = client.gtk
+        has_pskey = "p_skey" in client.cookies
+        try:
+            await client.close()
+        except Exception:  # noqa: BLE001
+            pass
+        if not uin:
+            return self._err("NapCat 返回的 Cookie 里没有 uin，可能取到了空的登录态，请先在 QQ 里打开一次「空间」")
+        if not gtk:
+            return self._err("取到的 Cookie 缺少 p_skey/skey，算不出 g_tk：请先在 QQ 客户端里打开一次「空间」面板再点一次")
+        ok, mode = self._save_cfg({"cookies_str": text})
+        if not ok:
+            return self._err(f"已取到 Cookie，但保存失败：{mode}")
+        self._client_cookie = ""
+        logger.info(f"[QzoneKit] WebUI 一键获取 Cookie 成功：QQ {uin}，{fields} 个字段")
+        return self._ok({
+            "cookie": text,
+            "uin": uin,
+            "fields": fields,
+            "gtk": gtk,
+            "has_pskey": has_pskey,
+            "saved": True,
+            "items": self._cfg_items(),
+            "overview": self._overview(),
         })
