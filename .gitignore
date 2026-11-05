@@ -11,3 +11,12 @@ logs/
 venv/
 .DS_Store
 Thumbs.db
+
+# 本地改代码时留下的备份/补丁残留
+*.bak
+*.bak_*
+*.orig
+*.rej
+
+# 配置保存失败时的本地回退文件
+_config_fallback.json

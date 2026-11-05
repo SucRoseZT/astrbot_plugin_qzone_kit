@@ -17,6 +17,8 @@ from .qzone_api import (
     QzoneClient,
     QzoneError,
     _strip_html,
+    parse_cookie_str,
+    uin_from_cookies,
 )
 
 
@@ -30,6 +32,10 @@ API_PREFIX = f"{PLUGIN_NAME}/api"
 CFG_GROUPS = [
     ("account", "账号绑定",
      "QQ 空间的登录凭证。Cookie 失效了整个插件就只剩报错，先来这里换。"),
+    ("autock", "Cookie 自动维护",
+     "按需补，不是无脑覆盖：启动时和定时点都先验一次当前 Cookie，"
+     "只有失效或没绑才去 NapCat 取。取不到（NapCat 没连上、QQ 没登录）只会重试，"
+     "绝不拿空值或别的号的 Cookie 覆盖已有绑定。"),
     ("switch", "功能开关",
      "六个动作一个个开关。关掉的动作 AI 调用会被直接拒绝，提示词里也会声明它停用。"),
     ("likes", "点赞显示",
@@ -52,7 +58,18 @@ CFG_ITEMS = [
      "浏览器登录 user.qzone.qq.com 后 F12 → Network → 任意请求 → 复制 Cookie 头，需含 p_skey 和 uin。"
      "也可以在聊天里 /qzone bind <Cookie> 绑定，或在面板里粘贴保存。"
      "装的是 NapCat 的话，打开本插件面板 → 设置 → Cookie 那一栏点「⚡ 一键获取（NapCat）」"
-     "可以直接从运行中的 QQ 取，不用手动复制"),
+     "可以直接从运行中的 QQ 取，不用手动复制。开了下面「Cookie 自动维护」就完全不用管"),
+    # ---- Cookie 自动维护 ----
+    ("auto_cookie_on_load", "启动时检查并补 Cookie", "bool", "autock",
+     "插件加载 20 秒后验一次当前 Cookie：没绑或已失效才去 NapCat 取，有效就什么都不做。默认开"),
+    ("auto_cookie_interval_minutes", "定时检查间隔（分钟）", "int", "autock",
+     "每隔多少分钟验一次 Cookie 的有效性（一次读请求），失效了才去取。0 = 只做启动那一次检查。"
+     "另外，AI 调工具时撞到「登录态失效」会立刻唤醒它去补，不用等这个间隔。默认 240（4 小时）"),
+    ("auto_cookie_force_refresh", "每次都强制重新取", "bool", "autock",
+     "关（默认）= 只在 Cookie 失效时才取，这是推荐用法：有效的 Cookie 不会被动来动去。"
+     "开 = 每次检查都无视有效性、直接从 NapCat 覆盖一遍，适合 p_skey 掉得比 4 小时还快的号"),
+    ("auto_cookie_retry_minutes", "取失败后的重试间隔（分钟）", "int", "autock",
+     "没取到 Cookie（NapCat 没连上 / QQ 没登录 / 没在客户端点开过空间）时隔多久再试，默认 15 分钟"),
     # ---- 开关 ----
     ("enable_list", "查说说", "bool", "switch",
      "AI 可以查看指定 QQ 的说说列表（内容、图片数、评论）"),
@@ -105,6 +122,8 @@ CFG_TYPE_OF = {k: t for k, _l, t, _g, _h in CFG_ITEMS}
 CFG_ITEM_HINT = {k: h for k, _l, _t, _g, h in CFG_ITEMS}
 CFG_DEFAULTS = {
     "cookies_str": "",
+    "auto_cookie_on_load": True, "auto_cookie_interval_minutes": 240,
+    "auto_cookie_force_refresh": False, "auto_cookie_retry_minutes": 15,
     "enable_list": True, "enable_post": True, "enable_comment": True,
     "enable_reply": True, "enable_like": True, "enable_delete": True,
     "show_likes_self": False, "show_likes_other": False, "like_names_max": 8,
@@ -126,10 +145,13 @@ _IMAGE_MAGIC = (
 @register(
     "astrbot_plugin_qzone_kit",
     "QingYu",
-    "QQ空间精简工具：发说说（带图）、评论、回复评论、点赞、读说说，LLM tools + 管理命令 + WebUI 面板",
-    "1.2.0",
+    "QQ空间精简工具：发说说（带图）、评论、回复评论、点赞、读说说，LLM tools + 管理命令 + WebUI 面板，Cookie 自动获取与定时刷新",
+    "1.5.1",
 )
 class QzoneKit(Star):
+    # 插件刚加载时平台未必连上 NapCat，先等一会儿再取，别把"没连上"当失败刷日志
+    _BOOT_GRACE_SECONDS = 20.0
+
     def __init__(self, context: Context, config: dict = None):
         super().__init__(context)
         self.config = config or {}
@@ -138,9 +160,231 @@ class QzoneKit(Star):
         # 记录：slot -> 上次成功时间戳（只有成功才记账）
         self._last_action: dict[str, float] = {}
         self._write_lock_until = 0.0
+        # 说说列表里抓到的 comment_id -> 作者 uin，楼中楼发之前用它校正参数
+        self._comment_index: dict[str, dict[str, int]] = {}
+        # Cookie 自动维护
+        self._cookie_task: asyncio.Task | None = None
+        self._cookie_alive = True
+        # 调用中撞到登录失效时用它把后台任务立刻叫醒，不用等定时点
+        self._cookie_wake = asyncio.Event()
+        self._cookie_wake_reason = ""
+        self._cookie_state: dict = {
+            "last_at": 0.0,          # 上次检查时间
+            "last_check": "",        # 上次检查结论
+            "last_fetch_at": 0.0,    # 上次真正取 Cookie 的时间
+            "ok": None,              # None 未知 / True 上次动作成功 / False 失败
+            "msg": "尚未执行",
+            "uin": 0,
+            "stale": False,
+        }
         self._register_web()
 
+    async def initialize(self):
+        """插件被激活时调用。这里只起后台任务，绝不 await 取 Cookie，否则会卡住加载。"""
+        self._cookie_alive = True
+        old = self._cookie_task
+        if old and not old.done():
+            # 热重载时 initialize 可能被再调一次，先把上一轮的循环收掉
+            old.cancel()
+        try:
+            self._cookie_task = asyncio.create_task(self._cookie_auto_loop())
+        except RuntimeError:
+            logger.warning("[QzoneKit] 没有运行中的事件循环，Cookie 自动维护未启动")
+            self._cookie_task = None
+        except Exception:
+            logger.warning("[QzoneKit] 启动 Cookie 自动维护任务失败", exc_info=True)
+            self._cookie_task = None
+
+    def _cookie_note(self, ok: bool, msg: str, uin: int = 0, fetched: bool = False) -> None:
+        patch = {"ok": ok, "msg": msg}
+        if uin:
+            patch["uin"] = int(uin)
+        if ok:
+            patch["stale"] = False
+        if fetched:
+            patch["last_fetch_at"] = time.time()
+        self._cookie_state.update(patch)
+
+    async def _auto_fetch_cookie(self) -> tuple[bool, str]:
+        """从 NapCat 取一次 Cookie，按需写入配置。返回 (成功与否, 说明)。"""
+        text, err = await self._cookie_from_platform()
+        if not text:
+            msg = err or "取不到 Cookie"
+            self._cookie_note(False, msg)
+            logger.info(f"[QzoneKit] 自动获取 Cookie 失败：{msg}")
+            return False, msg
+        try:
+            probe = QzoneClient(text)
+        except Exception as exc:  # noqa: BLE001
+            msg = f"取到的 Cookie 无法解析：{exc}"
+            self._cookie_note(False, msg)
+            logger.warning(f"[QzoneKit] {msg}")
+            return False, msg
+        uin, gtk = probe.uin, probe.gtk
+        try:
+            await probe.close()
+        except Exception:  # noqa: BLE001
+            pass
+        if not uin or not gtk:
+            msg = "取到的 Cookie 缺 uin 或 p_skey/skey（先在 QQ 客户端点开一次「空间」再试）"
+            self._cookie_note(False, msg)
+            logger.info(f"[QzoneKit] 自动获取 Cookie 失败：{msg}")
+            return False, msg
+
+        current = str(self._cfg("cookies_str", "") or "").strip()
+        current_uin = uin_from_cookies(parse_cookie_str(current)) if current else 0
+        if current and current_uin and current_uin != uin:
+            # 绝不悄悄换号：NapCat 上登的可能是另一个号，覆盖过去整个插件就全废了
+            msg = (
+                f"取到的是 QQ {uin} 的 Cookie，但当前绑定的是 QQ {current_uin}，已跳过不覆盖。"
+                "如果确实换了号，请在面板点「一键获取」或 /qzone bind 手动覆盖"
+            )
+            self._cookie_note(False, msg, uin)
+            logger.warning(f"[QzoneKit] {msg}")
+            return False, msg
+        if text.strip() == current:
+            msg = f"QQ {uin} 的 Cookie 无变化"
+            self._cookie_note(True, msg, uin, fetched=True)
+            logger.info(f"[QzoneKit] {msg}")
+            return True, msg
+
+        ok, mode = self._save_cfg({"cookies_str": text})
+        if not ok:
+            msg = f"已取到 QQ {uin} 的 Cookie，但保存失败：{mode}"
+            self._cookie_note(False, msg, uin)
+            logger.warning(f"[QzoneKit] {msg}")
+            return False, msg
+        self._client_cookie = ""
+        old = self._client
+        self._client = None
+        if old:
+            try:
+                asyncio.ensure_future(old.close())
+            except Exception:  # noqa: BLE001
+                pass
+        msg = f"已更新为 QQ {uin} 的 Cookie（{len(parse_cookie_str(text))} 个字段，g_tk={gtk}）"
+        self._cookie_note(True, msg, uin, fetched=True)
+        logger.info(f"[QzoneKit] 自动获取 Cookie 成功：{msg}")
+        return True, msg
+
+    async def _cookie_valid(self) -> tuple[bool | None, str]:
+        """当前 Cookie 还能不能用。True 有效 / False 失效 / None 说不准（网络问题）。"""
+        try:
+            client = self._get_client()
+        except QzoneAuthError as exc:
+            return False, str(exc)
+        except Exception as exc:  # noqa: BLE001
+            return None, f"{type(exc).__name__}: {exc}"
+        try:
+            return await client.check_alive()
+        except Exception as exc:  # noqa: BLE001
+            return None, f"{type(exc).__name__}: {exc}"
+
+    async def _cookie_check_and_refresh(self, reason: str = "") -> tuple[bool, str]:
+        """先验后取：Cookie 有效就什么都不做；没绑 / 失效才去 NapCat 取。
+
+        返回值表示「这一轮是否正常」，给外层决定下次等多久：正常按定时间隔，
+        失败按重试间隔。「说不准」也算正常——那种时候重取也解决不了问题，
+        反而会把还好的 Cookie 换掉。
+        """
+        force = bool(self._cfg("auto_cookie_force_refresh", False))
+        current = str(self._cfg("cookies_str", "") or "").strip()
+        self._cookie_state["last_at"] = time.time()
+        head = f"[QzoneKit] Cookie 检查（{reason or '自动'}）"
+
+        if not force and current:
+            alive, why = await self._cookie_valid()
+            if alive is True:
+                msg = f"当前 Cookie 有效，跳过获取（{why}）"
+                self._cookie_state.update(last_check="有效")
+                self._cookie_note(True, msg)
+                logger.info(f"{head}：{msg}")
+                return True, msg
+            if alive is None:
+                msg = f"无法确认 Cookie 有效性（{why}），这一轮不动它"
+                self._cookie_state.update(last_check="未知")
+                self._cookie_note(True, msg)
+                logger.info(f"{head}：{msg}")
+                return True, msg
+            logger.info(f"{head}：Cookie 已失效（{why}），开始重新获取")
+            self._cookie_state.update(last_check="已失效")
+        elif force:
+            self._cookie_state.update(last_check="强制刷新")
+            logger.info(f"{head}：强制刷新已开，直接重新获取")
+        else:
+            self._cookie_state.update(last_check="未绑定")
+            logger.info(f"{head}：还没有 Cookie，开始获取")
+
+        ok, msg = await self._auto_fetch_cookie()
+        try:
+            self._cookie_wake.clear()
+        except Exception:  # noqa: BLE001
+            pass
+        return ok, msg
+
+    async def _cookie_auto_loop(self):
+        """常驻任务：启动检查 → 按间隔检查 → 被调用中的失效事件拍醒。
+
+        「按需」是指只在 Cookie 失效时真的去取；检查本身是一次读请求。
+        """
+        interval = max(0, int(self._cfg("auto_cookie_interval_minutes", 240) or 0))
+        retry = max(1, int(self._cfg("auto_cookie_retry_minutes", 15) or 15))
+        on_load = bool(self._cfg("auto_cookie_on_load", True))
+        force = bool(self._cfg("auto_cookie_force_refresh", False))
+        if not on_load and interval <= 0:
+            logger.info("[QzoneKit] Cookie 自动维护已关闭（启动检查关、定时检查 0）")
+            return
+        delay: float | None = (
+            self._BOOT_GRACE_SECONDS if on_load else float(interval * 60)
+        )
+        logger.info(
+            f"[QzoneKit] Cookie 自动维护已启动：启动检查={'开' if on_load else '关'}，"
+            f"定时检查={interval} 分钟，模式={'强制刷新' if force else '仅失效时补'}，"
+            f"失败重试={retry} 分钟"
+        )
+        first = True
+        while self._cookie_alive:
+            woke = False
+            try:
+                if delay is None:
+                    await self._cookie_wake.wait()
+                else:
+                    await asyncio.wait_for(self._cookie_wake.wait(), timeout=delay)
+                woke = True
+                self._cookie_wake.clear()
+            except asyncio.TimeoutError:
+                pass
+            except asyncio.CancelledError:
+                return
+            if not self._cookie_alive:
+                return
+            if woke:
+                reason = self._cookie_wake_reason or "被唤醒"
+                self._cookie_wake_reason = ""
+            else:
+                reason = "启动检查" if first else "定时检查"
+            try:
+                ok, _msg = await self._cookie_check_and_refresh(reason=reason)
+            except asyncio.CancelledError:
+                return
+            except Exception:  # noqa: BLE001
+                # 任何意外都不能让这个常驻任务死掉，死了就再也没人补 Cookie 了
+                logger.warning("[QzoneKit] Cookie 检查抛出异常，按失败处理", exc_info=True)
+                ok = False
+            first = False
+            # 每轮重读，面板改了间隔/重试也不用重载插件
+            interval = max(0, int(self._cfg("auto_cookie_interval_minutes", 240) or 0))
+            retry = max(1, int(self._cfg("auto_cookie_retry_minutes", 15) or 15))
+            if ok:
+                delay = float(interval * 60) if interval > 0 else None
+            else:
+                delay = float(retry * 60)
+
     async def terminate(self):
+        self._cookie_alive = False
+        task, self._cookie_task = self._cookie_task, None
+        if task and not task.done():
+            task.cancel()
         if self._client:
             await self._client.close()
             self._client = None
@@ -258,9 +502,24 @@ class QzoneKit(Star):
         if self._client is None or cookie != self._client_cookie:
             if self._client:
                 asyncio.ensure_future(self._client.close())
-            self._client = QzoneClient(cookie)
+            self._client = QzoneClient(cookie, on_auth_error=self._on_auth_error)
             self._client_cookie = cookie
         return self._client
+
+    def _on_auth_error(self, msg: str) -> None:
+        """客户端撞到登录态失效时回调（同步、必须极轻）。
+
+        只做两件事：记一笔状态，把自动维护任务拍醒。真正的补 Cookie 在任务里做，
+        这样调用方立刻拿到异常，不用等网络往返。
+        """
+        self._cookie_state.update(
+            ok=False, stale=True, msg=f"调用中检测到登录态失效：{msg or '未知原因'}"
+        )
+        try:
+            self._cookie_wake_reason = "调用中撞到失效"
+            self._cookie_wake.set()
+        except Exception:  # noqa: BLE001
+            pass
 
     def _cooldown_check(self, event: AstrMessageEvent, action: str, target: str = "") -> str:
         cooldown = float(self._cfg(f"{action}_cooldown_seconds", 0) or 0)
@@ -401,6 +660,56 @@ class QzoneKit(Star):
             return f"{head} 赞了（共 {count} 人）" if count else f"{head} 赞了"
         return f"{count} 人赞了"
 
+    # ---------- 评论作者索引（楼中楼防 -10049） ---------- #
+
+    _COMMENT_INDEX_MAX = 64
+
+    def _index_moods(self, hostuin: int, msgs) -> None:
+        """把说说列表里的 comment_id -> 作者 uin 记进内存，给楼中楼校正参数用。"""
+        try:
+            for mood in msgs or []:
+                tid = str(mood.get("tid") or "")
+                if not tid:
+                    continue
+                authors = QzoneClient.comment_authors(mood)
+                if not authors:
+                    continue
+                key = f"{int(hostuin)}:{tid}"
+                self._comment_index.setdefault(key, {}).update(authors)
+            if len(self._comment_index) > self._COMMENT_INDEX_MAX:
+                for key in list(self._comment_index)[: len(self._comment_index) // 2]:
+                    self._comment_index.pop(key, None)
+        except Exception:  # noqa: BLE001
+            pass
+
+    async def _resolve_comment_uin(
+        self, client: QzoneClient, hostuin: int, fid: str, comment_id: str, given: int
+    ) -> tuple[int, str]:
+        """用服务端数据校正 comment_uin。
+
+        -10049 最常见的原因就是 commentUin 填错（填成自己 / 说说主人 / AI 编的号）：
+        空间只认被回复评论的真实作者 uin，填错直接判非法目标。这里先查内存索引
+        （列表刚拉过就有），查不到再翻两页说说列表兜底，最后才用调用方给的值。
+        """
+        key = f"{int(hostuin)}:{fid}"
+        authors = self._comment_index.get(key) or {}
+        if comment_id not in authors:
+            try:
+                mood = await client.find_mood(int(hostuin), fid, max_pages=2)
+            except Exception:  # noqa: BLE001
+                mood = None
+            if mood:
+                found = QzoneClient.comment_authors(mood)
+                if found:
+                    authors = found
+                    self._comment_index.setdefault(key, {}).update(found)
+        real = authors.get(comment_id)
+        if not real:
+            return given, ""
+        if not given or given == real:
+            return real, ""
+        return real, f"（已按服务端数据把 comment_uin 从 {given} 校正为 {real}）"
+
     # ---------- LLM 工具 ----------
 
     @filter.llm_tool(name="qzone_list")
@@ -438,6 +747,7 @@ class QzoneKit(Star):
         if not msgs:
             return "该 QQ 没有读到说说（可能没有说说、没有权限或已翻到最后一页）。"
         target_uin = hostuin or client.uin
+        self._index_moods(target_uin, msgs)
         # 点赞：两个开关任一命中才去捞动态流，默认一条额外请求都不发
         like_map = {}
         try:
@@ -616,7 +926,7 @@ class QzoneKit(Star):
             qq_number(string): 说说主人的 QQ 号
             fid(string): 说说 ID
             comment_id(string): 要回复的评论 ID（qzone_list 返回的 comment_id）
-            comment_uin(string): 被回复评论作者的 QQ 号
+            comment_uin(string): 被回复评论作者的 QQ 号；填不准就不用纠结，插件会用服务端数据自动校正
             content(string): 回复内容
         """
         denied = self._require_admin(event)
@@ -630,9 +940,9 @@ class QzoneKit(Star):
             return bad
         fid = str(fid or "").strip()
         comment_id = str(comment_id or "").strip()
-        comment_uin = str(comment_uin or "").strip().lstrip("oO")
-        if not fid or not comment_id or not comment_uin.isdigit():
-            return "参数不全或格式不对：需要 fid、comment_id 和评论作者的 comment_uin（数字）。请先调用 qzone_list 获取。"
+        raw_uin = str(comment_uin or "").strip().lstrip("oO")
+        if not fid or not comment_id:
+            return "参数不全：需要 fid 和 comment_id。请先调用 qzone_list 获取。"
         cleaned = str(qq_number or "").strip().lstrip("oO")
         if not cleaned.isdigit():
             return f"QQ 号格式不对：{qq_number}（也可以先调 qzone_list 拿到）"
@@ -641,13 +951,33 @@ class QzoneKit(Star):
             return cooldown_hit
         try:
             client = self._get_client()
-            await client.reply_comment(int(cleaned), fid, comment_id, int(comment_uin), content)
+            given = int(raw_uin) if raw_uin.isdigit() else 0
+            real_uin, fix_note = await self._resolve_comment_uin(
+                client, int(cleaned), fid, comment_id, given
+            )
+            if not real_uin:
+                return (
+                    "查不到这条评论的作者 uin。请先调用 qzone_list 重新拉一次说说列表，"
+                    "把该评论的 comment_id 和 uin 逐字抄下来再回复。"
+                )
+            await client.reply_comment(int(cleaned), fid, comment_id, real_uin, content)
         except QzoneAuthError as exc:
             return f"Cookie 失效，未回复：{exc} 请提醒管理员重新绑定。"
         except QzoneError as exc:
-            return f"回复失败：{exc}"
+            tip = self._reply_fail_tip(str(exc))
+            return f"回复失败：{exc}{tip}"
         self._cooldown_mark(event, "comment", fid)
-        return "回复已发送成功。到此为止，不要重复回复。"
+        return "回复已发送成功" + fix_note + "。到此为止，不要重复回复。"
+
+    @staticmethod
+    def _reply_fail_tip(text: str) -> str:
+        if "-10049" not in text:
+            return ""
+        return (
+            "\n-10049 的排查顺序：① comment_uin 是不是这条评论的真实作者（填成自己或说说主人必炸）；"
+            "② 对方说说有没有开评论权限 / 评论审核；③ 这个号是不是被风控了——读接口不校验这些，"
+            "所以表现就是「能读不能写」，让号主在手机 QQ 上手动评一条、过了验证码再试。"
+        )
 
     @filter.llm_tool(name="qzone_delete")
     async def qzone_delete(self, event: AstrMessageEvent, fid: str, created_time: int = 0):
@@ -849,7 +1179,7 @@ class QzoneKit(Star):
 
     @filter.command("qzone")
     async def qzone_cmd(self, event: AstrMessageEvent):
-        """QQ 空间管理命令：/qzone bind [Cookie] | /qzone ck | /qzone status | /qzone unbind | /qzone set <开关> <on|off>"""
+        """QQ 空间管理命令：/qzone bind [Cookie] | /qzone ck | /qzone diag | /qzone status | /qzone unbind | /qzone set <开关> <on|off>"""
         denied = self._require_admin(event)
         if denied:
             yield event.plain_result(denied)
@@ -884,6 +1214,10 @@ class QzoneKit(Star):
             if not ok:
                 logger.warning(f"[QzoneKit] Cookie 保存失败：{mode}，仅本次会话生效")
             self._client_cookie = ""
+            self._cookie_state.update(
+                last_at=time.time(), ok=True, uin=test.uin,
+                msg=f"聊天手动绑定：QQ {test.uin}",
+            )
             yield event.plain_result(f"已绑定 QQ {test.uin} 的空间 Cookie。{probe}。")
         elif sub == "ck":
             text, fetch_err = await self._cookie_from_onebot(event)
@@ -901,6 +1235,30 @@ class QzoneKit(Star):
                 f"p_skey={'有' if has_pskey else '无'}）：\n{text}\n"
                 "只发在私聊/管理员会话，别贴群里。要直接绑定就 /qzone bind"
             )
+        elif sub == "diag":
+            try:
+                client = self._get_client()
+            except QzoneError as exc:
+                yield event.plain_result(f"自检不了：{exc}")
+                return
+            yield event.plain_result("接口自检中。读接口真读一次；写接口只发空内容探针，不会发出任何内容…")
+            try:
+                rows = await client.diagnose()
+            except QzoneError as exc:
+                yield event.plain_result(f"自检中断：{exc}")
+                return
+            label = {"ok": "正常", "warn": "告警", "fail": "失败", "skip": "跳过"}
+            lines = [f"接口自检 · QQ {client.uin}"]
+            for row in rows:
+                lines.append(f"[{label.get(row['status'], '?')}] {row['name']}")
+                lines.append(f"    {row['detail']}")
+            fails = sum(1 for r in rows if r["status"] == "fail")
+            lines.append("")
+            lines.append(
+                "结论：有接口不通，按标「失败」的几行排查（读通写不通 = 账号风控或参数问题，不是 Cookie 过期）"
+                if fails else "结论：可探接口都正常。"
+            )
+            yield event.plain_result("\n".join(lines))
         elif sub == "set":
             arg = parts[2].strip() if len(parts) > 2 else ""
             if not arg:
@@ -938,7 +1296,8 @@ class QzoneKit(Star):
                 yield event.plain_result(f"状态：{exc}")
                 return
             yield event.plain_result(
-                f"已绑定账号：{client.uin}\nCookie 字段数：{len(client.cookies)}\ng_tk：{client.gtk}\n正在校验登录态…"
+                f"已绑定账号：{client.uin}\nCookie 字段数：{len(client.cookies)}\ng_tk：{client.gtk}\n"
+                f"{self._cookie_auto_line()}\n正在校验登录态…"
             )
             try:
                 msgs = await client.list_moods(num=1)
@@ -965,6 +1324,7 @@ class QzoneKit(Star):
         register_api(f"{API_PREFIX}/config", self._api_config, ["GET"], "总配置读取")
         register_api(f"{API_PREFIX}/config/set", self._api_config_set, ["POST"], "总配置保存")
         register_api(f"{API_PREFIX}/cookie/fetch", self._api_cookie_fetch, ["POST"], "一键获取空间 Cookie")
+        register_api(f"{API_PREFIX}/diagnose", self._api_diagnose, ["POST"], "接口自检")
 
     async def _panel_page(self):
         page = Path(__file__).parent / "pages" / "空间面板" / "index.html"
@@ -998,8 +1358,48 @@ class QzoneKit(Star):
                 a: int(self._cfg(f"{a}_cooldown_seconds", 0) or 0)
                 for a in ("post", "comment", "like", "delete")
             },
+            "cookie_auto": self._cookie_auto_overview(),
             "panel_url": f"/api/plug/{PANEL_PREFIX}",
         }
+
+    def _cookie_auto_overview(self) -> dict:
+        last_at = float(self._cookie_state.get("last_at") or 0)
+        fetched_at = float(self._cookie_state.get("last_fetch_at") or 0)
+        return {
+            "on_load": bool(self._cfg("auto_cookie_on_load", True)),
+            "interval_minutes": int(self._cfg("auto_cookie_interval_minutes", 240) or 0),
+            "retry_minutes": int(self._cfg("auto_cookie_retry_minutes", 15) or 15),
+            "force": bool(self._cfg("auto_cookie_force_refresh", False)),
+            "running": bool(self._cookie_task and not self._cookie_task.done()),
+            "last_at": last_at,
+            "last_time": (
+                time.strftime("%m-%d %H:%M", time.localtime(last_at)) if last_at else ""
+            ),
+            "last_check": str(self._cookie_state.get("last_check") or ""),
+            "fetch_time": (
+                time.strftime("%m-%d %H:%M", time.localtime(fetched_at)) if fetched_at else ""
+            ),
+            "ok": self._cookie_state.get("ok"),
+            "msg": str(self._cookie_state.get("msg") or ""),
+            "uin": int(self._cookie_state.get("uin") or 0),
+            "stale": bool(self._cookie_state.get("stale")),
+        }
+
+    def _cookie_auto_mode_text(self, ca: dict) -> str:
+        if not ca["on_load"] and not ca["interval_minutes"]:
+            return "已关闭"
+        mode = "每次强制刷新" if ca["force"] else "失效才补"
+        if ca["interval_minutes"]:
+            return f"每 {ca['interval_minutes']} 分钟检查 · {mode}"
+        return f"仅启动检查 · {mode}"
+
+    def _cookie_auto_line(self) -> str:
+        ca = self._cookie_auto_overview()
+        if not ca["running"]:
+            return f"Cookie 自动维护：未运行（{self._cookie_auto_mode_text(ca)}）"
+        last = ca["last_time"] or "还没跑过"
+        checked = f"，结论：{ca['last_check']}" if ca["last_check"] else ""
+        return f"Cookie 自动维护：运行中（{self._cookie_auto_mode_text(ca)}；上次检查 {last}{checked}）"
 
     async def _api_overview(self):
         return self._ok(self._overview())
@@ -1026,6 +1426,7 @@ class QzoneKit(Star):
             return self._err(f"Cookie 失效：{exc} 请重新绑定。")
         except QzoneError as exc:
             return self._err(f"读取说说失败：{exc}")
+        self._index_moods(hostuin, msgs)
         # 点赞明细：两个开关任一命中才去捞一次动态流（每页最多多一次请求）
         like_map = {}
         try:
@@ -1158,18 +1559,24 @@ class QzoneKit(Star):
         cid = str(payload.get("cid") or "").strip()
         cuin = str(payload.get("cuin") or "").strip().lstrip("oO")
         content = str(payload.get("content") or "").strip()
-        if not fid or not cid or not cuin.isdigit() or not qq.isdigit():
-            return self._err("参数不全：需要 fid、cid、cuin（数字）和 qq")
+        if not fid or not cid or not qq.isdigit():
+            return self._err("参数不全：至少需要 fid、cid 和 qq")
         if not content:
             return self._err("回复内容为空")
         try:
             client = self._get_client()
-            await client.reply_comment(int(qq), fid, cid, int(cuin), content)
+            given = int(cuin) if cuin.isdigit() else 0
+            real_uin, fix_note = await self._resolve_comment_uin(
+                client, int(qq), fid, cid, given
+            )
+            if not real_uin:
+                return self._err("查不到这条评论的作者 uin，请刷新说说列表后重试（或手动填 cuin）")
+            await client.reply_comment(int(qq), fid, cid, real_uin, content)
         except QzoneAuthError as exc:
             return self._err(f"Cookie 失效：{exc}")
         except QzoneError as exc:
-            return self._err(f"回复失败：{exc}")
-        return self._ok()
+            return self._err(f"回复失败：{exc}{self._reply_fail_tip(str(exc))}")
+        return self._ok({"corrected": fix_note})
 
     async def _api_delete(self):
         from quart import request as quart_request
@@ -1203,9 +1610,56 @@ class QzoneKit(Star):
         ok, info = self._save_cfg(patch)
         if not ok:
             return self._err(info)
+        # 改了自动维护相关的项就拍醒后台任务，让它按新参数重排下一次检查
+        if any(str(k).startswith("auto_cookie_") for k in (patch or {})):
+            try:
+                self._cookie_wake_reason = "配置变更"
+                self._cookie_wake.set()
+            except Exception:  # noqa: BLE001
+                pass
         return self._ok({
             "saved": True, "mode": info,
             "items": self._cfg_items(), "overview": self._overview(),
+        })
+
+    async def _api_diagnose(self):
+        """接口自检：逐个端点探活，把「能读不能写」这类问题定位到具体一环。
+
+        只读接口真读一次；写接口发**空内容 + 假 fid** 的探针，物理上不可能发出内容，
+        但能通过返回码看出鉴权过没过（服务端先验登录态再验参数）。
+        """
+        try:
+            client = self._get_client()
+        except QzoneAuthError as exc:
+            return self._err(f"还没绑定可用的 Cookie：{exc}")
+        except Exception as exc:  # noqa: BLE001
+            return self._err(f"{type(exc).__name__}: {exc}")
+        try:
+            rows = await client.diagnose()
+        except QzoneAuthError as exc:
+            return self._err(f"Cookie 失效，自检中断：{exc}")
+        except Exception as exc:  # noqa: BLE001
+            return self._err(f"自检没跑完：{type(exc).__name__}: {exc}")
+        counts = {"ok": 0, "warn": 0, "fail": 0, "skip": 0}
+        for row in rows:
+            counts[row.get("status", "skip")] = counts.get(row.get("status", "skip"), 0) + 1
+        if counts["fail"]:
+            verdict = "fail"
+            summary = f"有 {counts['fail']} 个接口不通，看下面标红的行"
+        elif counts["warn"]:
+            verdict = "warn"
+            summary = f"{counts['warn']} 个接口有告警，其余正常"
+        else:
+            verdict = "ok"
+            summary = "所有可探接口都通"
+        return self._ok({
+            "rows": rows,
+            "counts": counts,
+            "verdict": verdict,
+            "summary": summary,
+            "at": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "uin": client.uin,
+            "overview": self._overview(),
         })
 
     async def _api_cookie_fetch(self):
@@ -1234,6 +1688,10 @@ class QzoneKit(Star):
             return self._err(f"已取到 Cookie，但保存失败：{mode}")
         self._client_cookie = ""
         logger.info(f"[QzoneKit] WebUI 一键获取 Cookie 成功：QQ {uin}，{fields} 个字段")
+        self._cookie_state.update(
+            last_at=time.time(), ok=True, uin=uin,
+            msg=f"面板手动获取：QQ {uin}（{fields} 个字段）",
+        )
         return self._ok({
             "cookie": text,
             "uin": uin,

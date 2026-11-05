@@ -14,8 +14,39 @@
       "cookies_str": {
         "description": "空间 Cookie",
         "type": "string",
-        "hint": "浏览器登录 user.qzone.qq.com 后 F12 → Network → 任意请求 → 复制 Cookie 头，需含 p_skey 和 uin。也可以在聊天里 /qzone bind <Cookie> 绑定，或在面板里粘贴保存。装的是 NapCat 的话，打开本插件面板 → 设置 → Cookie 那一栏点「⚡ 一键获取（NapCat）」可以直接从运行中的 QQ 取，不用手动复制",
+        "hint": "浏览器登录 user.qzone.qq.com 后 F12 → Network → 任意请求 → 复制 Cookie 头，需含 p_skey 和 uin。也可以在聊天里 /qzone bind <Cookie> 绑定，或在面板里粘贴保存。装的是 NapCat 的话，打开本插件面板 → 设置 → Cookie 那一栏点「⚡ 一键获取（NapCat）」可以直接从运行中的 QQ 取，不用手动复制。开了下面「Cookie 自动维护」就完全不用管",
         "default": ""
+      }
+    }
+  },
+  "autock": {
+    "description": "Cookie 自动维护",
+    "type": "object",
+    "hint": "按需补，不是无脑覆盖：启动时和定时点都先验一次当前 Cookie，只有失效或没绑才去 NapCat 取。取不到（NapCat 没连上、QQ 没登录）只会重试，绝不拿空值或别的号的 Cookie 覆盖已有绑定。",
+    "items": {
+      "auto_cookie_on_load": {
+        "description": "启动时检查并补 Cookie",
+        "type": "bool",
+        "hint": "插件加载 20 秒后验一次当前 Cookie：没绑或已失效才去 NapCat 取，有效就什么都不做。默认开",
+        "default": true
+      },
+      "auto_cookie_interval_minutes": {
+        "description": "定时检查间隔（分钟）",
+        "type": "int",
+        "hint": "每隔多少分钟验一次 Cookie 的有效性（一次读请求），失效了才去取。0 = 只做启动那一次检查。另外，AI 调工具时撞到「登录态失效」会立刻唤醒它去补，不用等这个间隔。默认 240（4 小时）",
+        "default": 240
+      },
+      "auto_cookie_force_refresh": {
+        "description": "每次都强制重新取",
+        "type": "bool",
+        "hint": "关（默认）= 只在 Cookie 失效时才取，这是推荐用法：有效的 Cookie 不会被动来动去。开 = 每次检查都无视有效性、直接从 NapCat 覆盖一遍，适合 p_skey 掉得比 4 小时还快的号",
+        "default": false
+      },
+      "auto_cookie_retry_minutes": {
+        "description": "取失败后的重试间隔（分钟）",
+        "type": "int",
+        "hint": "没取到 Cookie（NapCat 没连上 / QQ 没登录 / 没在客户端点开过空间）时隔多久再试，默认 15 分钟",
+        "default": 15
       }
     }
   },
@@ -63,26 +94,26 @@
     }
   },
   "likes": {
-    "description": "👍 点赞显示",
+    "description": "点赞显示",
     "type": "object",
     "hint": "看说说时要不要顺带显示「谁赞了」。默认全关：点赞数据只能从空间动态流里捞，每页多一次请求；而且只有落在动态流里的说说才有（自己的、好友近期的），别人的老说说捞不到，会静默不显示。",
     "items": {
       "show_likes_self": {
-        "description": "看自己空间时显示点赞",
+        "description": "看自己空间显示点赞",
         "type": "bool",
-        "hint": "翻自己空间的说说时，每条下面列出点赞人的昵称和总人数。默认关。",
+        "hint": "翻自己空间的说说时，每条下面列出点赞人的昵称和总人数。默认关",
         "default": false
       },
       "show_likes_other": {
-        "description": "看别人空间时显示点赞",
+        "description": "看别人空间显示点赞",
         "type": "bool",
-        "hint": "翻别人空间的说说时，每条下面列出点赞人的昵称和总人数。默认关——别人的说说未必在动态流里，捞不到就不显示。",
+        "hint": "翻别人空间的说说时，每条下面列出点赞人的昵称和总人数。默认关——别人的说说未必在动态流里，捞不到就不显示",
         "default": false
       },
       "like_names_max": {
         "description": "最多列出几个点赞人",
         "type": "int",
-        "hint": "动态流里本身就只带前几个人名，这里再截一道。总数照常显示。",
+        "hint": "动态流里本身就只带前几个人名，这里再截一道。总人数照常显示",
         "default": 8
       }
     }

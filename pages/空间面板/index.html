@@ -325,6 +325,31 @@
   .ckmsg.no{color:var(--bad)}
   .saveflag{font-size:11px;color:var(--ink-3);min-width:36px;text-align:right;transition:opacity .2s;opacity:0}
   .saveflag.on{opacity:1}
+
+  /* ---------------- 接口自检 ---------------- */
+  .diagbar{display:flex;align-items:center;gap:10px;margin:2px 0 12px;flex-wrap:wrap}
+  .diagstate{font-size:11.5px;color:var(--ink-3);line-height:1.6}
+  .diagstate.ok{color:var(--ok)}
+  .diagstate.warn{color:var(--warn)}
+  .diagstate.no{color:var(--bad)}
+  .diaglist{display:flex;flex-direction:column;gap:6px;padding-bottom:12px}
+  .drow{
+    display:grid;grid-template-columns:8px 1fr auto;gap:1px 9px;
+    padding:9px 12px;border-radius:13px;background:rgba(255,255,255,.55);
+    border:1px solid var(--line-2);
+  }
+  html[data-theme="dark"] .drow{background:rgba(255,255,255,.045)}
+  .drow .dd{width:7px;height:7px;border-radius:50%;margin-top:8px;background:var(--ink-3);box-shadow:0 0 0 3px rgba(179,148,166,.14)}
+  .drow.ok .dd{background:#31c48d;box-shadow:0 0 0 3px rgba(49,196,141,.16)}
+  .drow.warn .dd{background:var(--warn);box-shadow:0 0 0 3px rgba(217,138,43,.16)}
+  .drow.fail .dd{background:var(--bad);box-shadow:0 0 0 3px rgba(226,86,107,.16)}
+  .drow .dn{font-size:12.5px;font-weight:600;line-height:1.55;min-width:0;word-break:break-word}
+  .drow .dt{font-size:10.5px;color:var(--ink-3);align-self:center;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .drow .dd2{grid-column:2 / span 2;font-size:11.5px;line-height:1.6;color:var(--ink-2);word-break:break-word}
+  .drow.fail .dd2{color:var(--bad)}
+  .drow.warn .dd2{color:var(--warn)}
+  .drow.skip{opacity:.72}
+  .diagfoot{font-size:11px;color:var(--ink-3);padding:0 2px 10px}
   .saveflag.ok{color:var(--ok)}
   .saveflag.no{color:var(--bad)}
 
@@ -523,6 +548,22 @@
           <div class="statgrid" id="aiStats">
             <div class="statp"><div class="k">账号</div><div class="v">检查中…</div></div>
           </div>
+          <div class="diagfoot" id="cookieAutoLine"></div>
+        </div>
+
+        <div class="sec" style="padding-bottom:16px">
+          <div class="sec-h"><span>诊断</span><h4>接口自检</h4></div>
+          <div class="sec-hint">
+            把每个 QQ 空间接口单独探一次，用来看清到底是哪个环节坏了。
+            读接口会真读一次；评论 / 楼中楼 / 点赞只发<strong>空内容 + 假 ID</strong> 的探针，
+            物理上发不出任何东西，只看服务端认不认这次鉴权。
+            读得通、写不通，通常是账号风控或参数问题，而不是 Cookie 过期。
+          </div>
+          <div class="diagbar">
+            <button class="btn pri" id="btnDiag">开始自检</button>
+            <span class="diagstate" id="diagState">还没跑过</span>
+          </div>
+          <div class="diaglist" id="diagList"></div>
         </div>
 
         <div class="secline">
@@ -551,6 +592,7 @@
             <li>粘到「AI空间 → 账号绑定 → 空间 Cookie」，点一下别处自动保存</li>
           </ul>
           <p>Cookie 里必须有 <code>p_skey</code>（或 <code>skey</code>）和 <code>uin</code>，少了算不出 g_tk、也解析不出身份。Cookie 会过期，失效了面板会提示，重拿一次粘进来就行。</p>
+          <p>装了 NapCat 的话其实不用手动：<b>Cookie 自动维护</b>会在启动时和每隔几小时验一次，<b>失效了才去取</b>，有效的时候一根手指都不动它。</p>
         </div>
 
         <div class="doc">
@@ -568,6 +610,7 @@
           <table>
             <tr><th>命令</th><th>干什么</th></tr>
             <tr><td><code>/qzone status</code></td><td>看绑定状态和登录态是否有效</td></tr>
+            <tr><td><code>/qzone diag</code></td><td>逐个接口探活，排查「能读不能写」</td></tr>
             <tr><td><code>/qzone bind &lt;Cookie&gt;</code></td><td>绑定 Cookie（和面板里粘是同一个效果）</td></tr>
             <tr><td><code>/qzone unbind</code></td><td>解绑</td></tr>
             <tr><td><code>/qzone set &lt;开关&gt; &lt;on|off&gt;</code></td><td>切开关：list/post/comment/reply/like/delete/admin/prompt，不带 on/off 就翻转</td></tr>
@@ -592,11 +635,27 @@
         </div>
 
         <div class="doc">
-          <h4><em>06</em>配置分组一览</h4>
+          <h4><em>06</em>接口自检怎么读</h4>
+          <p>AI空间 → 诊断 → 「开始自检」。读接口会真读一次；评论、楼中楼、点赞只发<b>空内容 + 假 ID</b> 的探针，发不出任何东西，只看服务端认不认这次鉴权。</p>
+          <table>
+            <tr><th>看到什么</th><th>说明</th></tr>
+            <tr><td>返回「参数错误 / 内容为空」</td><td>正常。服务端先验登录态再验参数，能挑参数毛病就说明鉴权过了</td></tr>
+            <tr><td><code>-10049</code></td><td>写权限被拒：commentUin 不对、对方限制评论，或账号风控</td></tr>
+            <tr><td><code>-3000</code> / 302 到登录页</td><td>Cookie 失效，重新绑定或等自动维护补</td></tr>
+            <tr><td>读全通、写全挂</td><td>账号写操作被风控，换 Cookie 没用；看有没有 needVerify=1</td></tr>
+            <tr><td>某一项单独挂</td><td>就看那一项，楼中楼有主站/h5/addreply 三份，挂一份还有兜底</td></tr>
+          </table>
+          <div class="callout">发说说、上传图片、删说说有副作用，自检里标「跳过」，不会去碰。</div>
+        </div>
+
+        <div class="doc">
+          <h4><em>07</em>配置分组一览</h4>
           <table>
             <tr><th>分组</th><th>内容</th></tr>
             <tr><td>账号绑定</td><td>空间 Cookie。整个插件的地基，失效了先换它</td></tr>
+            <tr><td>Cookie 自动维护</td><td>启动/定时检查、失效才补、强制刷新、失败重试</td></tr>
             <tr><td>功能开关</td><td>六个动作各自的开/关，关掉的动作 AI 调用会被直接拒绝</td></tr>
+            <tr><td>点赞显示</td><td>看说说时要不要列出赞的人（多一次请求）</td></tr>
             <tr><td>权限</td><td>仅管理员可用。默认开，放开给所有人之前想清楚</td></tr>
             <tr><td>提示词注入</td><td>给 AI 的使用规范 + 你自己的追加要求</td></tr>
             <tr><td>冷却与防抖</td><td>AI 侧的频率刹车，四个动作冷却 + 写后全局锁</td></tr>
@@ -817,7 +876,13 @@
     }
     dot.className = 'dot on';
     name.textContent = '登录账号 · QQ ' + d.uin;
-    meta.textContent = '动作 ' + enabledCount() + '/6 · Cookie ' + d.cookie_fields + ' 项';
+    var metaTxt = '动作 ' + enabledCount() + '/6 · Cookie ' + d.cookie_fields + ' 项';
+    var ca = d.cookie_auto || {};
+    if (ca.on_load || ca.interval_minutes) {
+      metaTxt += ' · Cookie ' + (ca.force ? '强制刷新' : '失效才补') +
+        (ca.interval_minutes ? '（每 ' + ca.interval_minutes + ' 分钟检查）' : '（仅启动检查）');
+    }
+    meta.textContent = metaTxt;
     if (d.write_lock_remain > 0) {
       lock.style.display = '';
       lock.textContent = 'AI 写锁中 · 剩 ' + Math.ceil(d.write_lock_remain) + ' 秒';
@@ -853,7 +918,7 @@
     try {
       var d = await api('api/overview');
       state.ov = d;
-      setStatus(); renderHomeLive(); renderAcct(); renderAIStats();
+      setStatus(); renderHomeLive(); renderAcct(); renderAIStats(); renderCookieAuto();
       var bn = $('#banner'); if (bn) bn.classList.remove('on');
     } catch (e) {
       setStatus();
@@ -863,6 +928,72 @@
         toast(e.message, true);
       }
     }
+  }
+
+  /* ---------------- 接口自检 ---------------- */
+
+  function renderCookieAuto() {
+    var el = $('#cookieAutoLine');
+    if (!el) return;
+    var d = state.ov;
+    if (!d || !d.bound) { el.textContent = ''; return; }
+    var ca = d.cookie_auto || {};
+    if (!ca.on_load && !ca.interval_minutes) {
+      el.textContent = 'Cookie 自动维护：已关闭';
+      return;
+    }
+    var t = 'Cookie 自动维护：' +
+      (ca.interval_minutes ? '每 ' + ca.interval_minutes + ' 分钟检查' : '仅启动检查') +
+      ' · ' + (ca.force ? '每次强制刷新' : '失效才补');
+    if (ca.last_time) {
+      t += ' · 上次 ' + ca.last_time + (ca.last_check ? '（' + ca.last_check + '）' : '');
+    }
+    if (ca.fetch_time) t += ' · 上次取到 ' + ca.fetch_time;
+    if (ca.stale) t += ' · 刚撞到失效，正在补';
+    el.textContent = t;
+  }
+
+  function renderDiag(d) {
+    var box = $('#diagList');
+    var st = $('#diagState');
+    if (!box || !st) return;
+    var rows = (d && d.rows) || [];
+    if (!rows.length) { box.innerHTML = ''; return; }
+    box.innerHTML = rows.map(function (r) {
+      return '<div class="drow ' + esc(r.status) + '">' +
+        '<span class="dd"></span>' +
+        '<span class="dn">' + esc(r.name) + '</span>' +
+        '<span class="dt">' + (r.ms ? r.ms + ' ms' : '') + '</span>' +
+        '<div class="dd2">' + esc(r.detail) + '</div>' +
+        '</div>';
+    }).join('');
+    var cls = d.verdict === 'ok' ? 'ok' : (d.verdict === 'fail' ? 'no' : 'warn');
+    st.className = 'diagstate ' + cls;
+    st.textContent = (d.summary || '') + ' · ' + (d.at || '');
+  }
+
+  async function runDiagnose() {
+    var btn = $('#btnDiag');
+    var st = $('#diagState');
+    if (!btn) return;
+    var old = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '探活中…';
+    if (st) { st.className = 'diagstate'; st.textContent = '正在逐个请求，十几秒左右'; }
+    try {
+      var d = await api('api/diagnose', { method: 'POST' });
+      renderDiag(d);
+      if (d && d.overview) {
+        state.ov = d.overview;
+        setStatus(); renderAcct(); renderHomeLive(); renderAIStats(); renderCookieAuto();
+      }
+      toast(d && d.verdict === 'fail' ? '有接口不通，看标红的那几行' : '自检完成');
+    } catch (e) {
+      if (st) { st.className = 'diagstate no'; st.textContent = e.message; }
+      toast(e.message, true);
+    }
+    btn.disabled = false;
+    btn.textContent = old;
   }
 
   /* ---------------- 说说列表 ---------------- */
@@ -1443,6 +1574,9 @@
     if (ev.key === 'Enter') { ev.preventDefault(); setMode('other'); }
   });
   $('#btnMore').addEventListener('click', function () { loadMoods(false); });
+
+  var diagBtn = $('#btnDiag');
+  if (diagBtn) diagBtn.addEventListener('click', runDiagnose);
 
   // 滑到底 → 提示下一页
   $('#vQzone .scroll').addEventListener('scroll', function () {
